@@ -30,13 +30,15 @@ pytest
 ## Utilização
 
 ```bash
+asd fetch                  # 0. descarregar e verificar os dados brutos (configs/sources.yaml)
+asd gene-map               #    tabela de IDs Ensembl ↔ HGNC ↔ Entrez ↔ MANE ↔ STRING
 asd labels                 # 1. construir positivos/negativos
 asd embed protein          # 2. gerar embeddings (dna | protein | graph)
 asd train --model all      # 3. treinar e avaliar
 asd rank                   # 4. lista ordenada de genes
 ```
 
-> Estado: em construção. Os comandos ainda são esqueletos (ver `CLAUDE.md`).
+> Estado: em construção. `fetch` e `gene-map` já funcionam; os restantes comandos ainda são esqueletos (ver `CLAUDE.md`).
 
 ## Estrutura
 

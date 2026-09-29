@@ -58,6 +58,7 @@ Reescrever de forma limpa e reprodutível o código da tese de mestrado do João
 Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 
 - [x] Estrutura base do repo, `pyproject.toml`, config, CLI esqueleto, teste de fumo, CI (GitHub Actions)
+- [x] Registo de fontes com checksums (`asd fetch`) e tabela de IDs (`asd gene-map`)
 - [ ] **Etapa 1 — Labels**: download/leitura do SFARI e de Krishnan, conversão NCBI→Ensembl, geração dos conjuntos de positivos
 - [ ] **Etapa 2 — Embeddings de proteína** (ProtT5), a primeira fonte a portar
 - [ ] **Etapa 3 — Treino/avaliação** unificado, com métricas corrigidas e resultados em Parquet/CSV
@@ -70,7 +71,11 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 
 ## Estado atual
 
-**2026-09-29**: estrutura base, CI e plano (`docs/PLANO.md`) no PR #1 (`setup/estrutura-base`). Próximo passo: PR 2 (`asd fetch` + `gene_map`).
+**2026-09-29**
+- PR #1 (`setup/estrutura-base`): estrutura base, CI e plano (`docs/PLANO.md`). CI verde, à espera de revisão.
+- PR 2 (`feat/fetch-gene-map`, empilhado sobre o #1): `configs/sources.yaml` + `asd fetch` (download com `.part`, SHA-256 gravado em `configs/sources.lock.yaml`) e `asd gene-map` → `data/processed/gene_map.parquet` (HGNC como base, MANE Select, STRING v12). Função `map_ids()` para converter IDs (vai servir o Krishnan NCBI→Ensembl no PR 3). Testado com fixtures offline.
+- Ainda não foi feito um `asd fetch` real (a sessão cloud não chega a esses servidores). O João deve correr `asd fetch --stage gene_map && asd gene-map` localmente e fazer commit do `configs/sources.lock.yaml`.
+- Próximo passo: PR 3 (`asd labels`: SFARI + Krishnan + `configs/exclusions.yaml`). Precisa dos ficheiros originais do SFARI (release 16/01/2024) e de Krishnan.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
 
@@ -79,3 +84,5 @@ Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão
 - Porque foram excluídos os três genes acima?
 - Onde estão os dados grandes originais (embeddings, FASTA, STRING)? Voltar a gerá-los ou há cópia?
 - Há acesso a GPU para voltar a gerar os embeddings de ProtT5 e DNABERT-2?
+- O João ainda tem o CSV do SFARI de 16/01/2024 e a tabela de negativos de Krishnan usados na tese? (necessários para o PR 3)
+- A tese usou o transcrito canónico do Ensembl; o `gene_map` usa MANE Select. Na grande maioria dos genes codificantes coincidem, mas confirmar se há diferenças relevantes ao reproduzir os resultados.

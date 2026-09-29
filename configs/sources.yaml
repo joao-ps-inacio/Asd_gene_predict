@@ -1,0 +1,62 @@
+# Registo das fontes de dados brutos.
+#
+# Cada entrada descreve UM ficheiro em data/raw/<filename>.
+# - url: de onde o `asd fetch` o descarrega. Fontes com `manual: true` têm de ser colocadas
+#   à mão em data/raw/ (termos de utilização ou download atrás de login); o `asd fetch` só as verifica.
+# - version: versão/release da fonte, para referência humana.
+# - stage: etapa do pipeline que usa o ficheiro (permite `asd fetch --stage labels`).
+#
+# Os checksums SHA-256 NÃO estão aqui: ficam em configs/sources.lock.yaml, escrito pelo
+# `asd fetch` no primeiro download e verificado nos seguintes (como um package-lock).
+
+sources:
+  hgnc:
+    description: HGNC complete set — símbolos aprovados com IDs Ensembl, Entrez e MANE Select
+    url: https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt
+    filename: hgnc_complete_set.txt
+    version: current   # o HGNC só publica a versão corrente neste URL; o lock fixa o conteúdo
+    stage: gene_map
+
+  mane:
+    description: MANE summary — transcrito/proteína canónicos (MANE Select) por gene
+    url: https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/release_1.4/MANE.GRCh38.v1.4.summary.txt.gz
+    filename: MANE.GRCh38.v1.4.summary.txt.gz
+    version: "1.4"
+    stage: gene_map
+
+  string_aliases:
+    description: STRING v12 aliases humanos — liga as proteínas STRING (9606.ENSP...) aos genes Ensembl
+    url: https://stringdb-downloads.org/download/protein.aliases.v12.0/9606.protein.aliases.v12.0.txt.gz
+    filename: 9606.protein.aliases.v12.0.txt.gz
+    version: "12.0"
+    stage: gene_map
+
+  string_links:
+    description: STRING v12 interações humanas com combined_score (grafo PPI)
+    url: https://stringdb-downloads.org/download/protein.links.v12.0/9606.protein.links.v12.0.txt.gz
+    filename: 9606.protein.links.v12.0.txt.gz
+    version: "12.0"
+    stage: graph
+
+  sfari:
+    description: SFARI Gene — export CSV dos genes humanos (positivos)
+    url: https://gene.sfari.org/tools/
+    filename: SFARI-Gene_genes_01-16-2024release.csv
+    version: "2024-01-16"
+    stage: labels
+    manual: true
+    instructions: >
+      Descarregar o CSV "Human Gene Module" da release de 16/01/2024 (a usada na tese) em
+      https://gene.sfari.org/tools/ e guardá-lo em data/raw/ com este nome.
+      Os termos de utilização do SFARI não permitem pôr o ficheiro no Git.
+
+  krishnan_2016:
+    description: Krishnan et al. (2016), Nat Neurosci 19:1454 — genes negativos (Entrez IDs)
+    url: https://doi.org/10.1038/nn.4353
+    filename: krishnan_2016_negatives.csv
+    version: "2016"
+    stage: labels
+    manual: true
+    instructions: >
+      Tabela suplementar de Krishnan et al. (2016) com os genes negativos usados na tese.
+      Guardar em data/raw/ com este nome (CSV com uma coluna `entrez_id`).
