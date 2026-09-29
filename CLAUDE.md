@@ -51,10 +51,13 @@ Reescrever de forma limpa e reprodutível o código da tese de mestrado do João
 7. Grelha do SVM com `sigmoid` repetido e `degree` testado em todos os kernels (só afeta o `poly`), o que multiplica o tempo de treino sem ganho.
 8. DNABERT-2: sequências acima de 10 000 bp eram descartadas em silêncio, dentro de um `try/except` genérico. Registar quais genes ficam de fora.
 9. Não havia seed fixa, pelo que os resultados não eram reprodutíveis.
+10. Grafo STRING usado com todas as arestas, incluindo as de baixa confiança (sem filtro de `combined_score`).
 
 ## Roadmap
 
-- [x] Estrutura base do repo, `pyproject.toml`, config, CLI esqueleto, teste de fumo
+Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
+
+- [x] Estrutura base do repo, `pyproject.toml`, config, CLI esqueleto, teste de fumo, CI (GitHub Actions)
 - [ ] **Etapa 1 — Labels**: download/leitura do SFARI e de Krishnan, conversão NCBI→Ensembl, geração dos conjuntos de positivos
 - [ ] **Etapa 2 — Embeddings de proteína** (ProtT5), a primeira fonte a portar
 - [ ] **Etapa 3 — Treino/avaliação** unificado, com métricas corrigidas e resultados em Parquet/CSV
@@ -67,7 +70,9 @@ Reescrever de forma limpa e reprodutível o código da tese de mestrado do João
 
 ## Estado atual
 
-**2026-09-29**: repo criado; estrutura base num PR (`setup/estrutura-base`). Próximo passo: Etapa 1 (labels).
+**2026-09-29**: estrutura base, CI e plano (`docs/PLANO.md`) no PR #1 (`setup/estrutura-base`). Próximo passo: PR 2 (`asd fetch` + `gene_map`).
+
+Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
 
 ## Questões em aberto
 
