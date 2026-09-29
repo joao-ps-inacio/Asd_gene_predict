@@ -1,0 +1,30 @@
+# Configuração por defeito do pipeline. Valores herdados da tese, a rever.
+seed: 42
+
+labels:
+  sfari_release: "2024-01-16"       # versão usada na tese; atualizar para uma release recente
+  positive_sets:                    # combinações de categorias SFARI testadas na tese
+    cat_1: {max_score: 1, syndromic: false}
+    cat_1_sd: {max_score: 1, syndromic: true}
+    cat_1_2: {max_score: 2, syndromic: false}
+    cat_1_2_sd: {max_score: 2, syndromic: true}
+    cat_1_2_3: {max_score: 3, syndromic: false}
+  negatives: krishnan_2016
+
+embeddings:
+  dna:
+    model: zhihan1996/DNABERT-2-117M
+    pooling: mean
+    max_len: 10000
+  protein:
+    model: Rostlab/prot_t5_xl_half_uniref50-enc
+    pooling: mean
+  graph:
+    source: string_ppi
+    methods: [node2vec_skipgram, deepwalk_skipgram, first_order_line, second_order_line, hope]
+    dim: 200
+
+cv:
+  n_splits: 5
+  test_set: cat_1        # na tese, o teste é sempre feito nos genes cat_1
+  scoring: average_precision
