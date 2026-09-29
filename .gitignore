@@ -29,7 +29,7 @@ data/external/*
 !data/**/.gitkeep
 !data/**/README.md
 
-models/
+/models/
 *.pkl
 *.joblib
 *.pt
