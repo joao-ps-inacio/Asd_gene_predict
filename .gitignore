@@ -1,0 +1,57 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Ambientes ---
+.venv/
+venv/
+env/
+.env
+.python-version
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Dados e artefactos (não vão para o Git) ---
+data/raw/*
+data/interim/*
+data/processed/*
+data/external/*
+!data/**/.gitkeep
+!data/**/README.md
+
+/models/
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.h5
+*.sqlite
+.pybiomart.sqlite
+
+# Ficheiros grandes típicos do projeto
+*.fa
+*.fa.gz
+*.fasta
+*.fasta.gz
+*.csv.gz
+*.parquet
+
+# --- Experiências ---
+mlruns/
+wandb/
+outputs/
+
+# --- IDE / SO ---
+.vscode/
+.idea/
+.DS_Store

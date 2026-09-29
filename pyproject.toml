@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "asd-gene-predict"
+version = "0.1.0"
+description = "Previsão de genes de risco de autismo (ASD) com embeddings de grafo e de sequência"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "João Inácio" }]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyarrow>=15",
+    "scikit-learn>=1.5",
+    "xgboost>=2.0",
+    "lightgbm>=4.3",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# Embeddings de sequência (DNABERT-2, ProtT5) — pesado, precisa de GPU para ser prático
+seq = [
+    "torch>=2.2",
+    "transformers>=4.40",
+    "sentencepiece>=0.2",
+    "einops>=0.7",
+]
+# Embeddings de grafo (GRAPE)
+graph = ["grape>=0.2"]
+# Validação / anotação
+validation = ["gprofiler-official>=1.0", "pybiomart>=0.2", "networkx>=3.2"]
+dev = ["pytest>=8.0", "ruff>=0.5", "jupyterlab>=4.0", "matplotlib>=3.8"]
+
+[project.scripts]
+asd = "asd_gene_predict.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/asd_gene_predict"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
