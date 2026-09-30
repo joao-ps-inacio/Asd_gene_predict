@@ -47,14 +47,24 @@ def continuous_scores(model, X) -> np.ndarray:
     return model.decision_function(X)
 
 
+def precision_at_k(y_true: np.ndarray, scores: np.ndarray, k: int) -> float:
+    """Precision among the ``k`` highest scores, with ties at the cut-off counted by their
+    expected value (so the result does not depend on the order of the rows)."""
+    if k <= 0:
+        return np.nan
+    y_true, scores = np.asarray(y_true), np.asarray(scores)
+    cut = np.sort(scores)[::-1][k - 1]
+    above, tied = scores > cut, scores == cut
+    hits = y_true[above].sum() + (k - above.sum()) * y_true[tied].mean()
+    return float(hits / k)
+
+
 def compute_metrics(y_true: np.ndarray, scores: np.ndarray, y_pred: np.ndarray) -> dict:
     y_true = np.asarray(y_true)
-    k = int(y_true.sum())  # precision among the top-k genes, k = number of positives
-    top = np.argsort(-scores, kind="stable")[:k]
     return {
         "roc_auc": roc_auc_score(y_true, scores),
         "average_precision": average_precision_score(y_true, scores),
-        "precision_at_k": float(y_true[top].mean()) if k else np.nan,
+        "precision_at_k": precision_at_k(y_true, scores, int(y_true.sum())),
         "f1": f1_score(y_true, y_pred, zero_division=0),
         "precision": precision_score(y_true, y_pred, zero_division=0),
         "recall": recall_score(y_true, y_pred, zero_division=0),

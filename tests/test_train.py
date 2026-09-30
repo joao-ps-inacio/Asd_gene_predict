@@ -44,6 +44,14 @@ def test_metrics_use_scores_not_labels():
     assert perfect["roc_auc"] == 1.0 and perfect["roc_auc_legacy"] == 0.5
 
 
+def test_precision_at_k_ignores_row_order_on_ties():
+    y = np.array([1, 1, 0, 0])
+    tied = np.ones(4)
+    assert ev.precision_at_k(y, tied, 2) == pytest.approx(0.5)
+    assert ev.precision_at_k(y[::-1], tied, 2) == pytest.approx(0.5)
+    assert ev.precision_at_k(y, np.array([0.9, 0.5, 0.5, 0.1]), 2) == pytest.approx(0.75)
+
+
 def test_folds_are_shared_and_leak_free(data):
     X, labels = data
     res = ev.cross_validate(X, labels, SETS, ["lr"], n_splits=3, inner_splits=3, n_jobs=1)
