@@ -22,6 +22,8 @@ Fundações ─► Dados/labels ─► Embeddings ─► Modelação ─► Vali
 
 ## Fase 1 — Dados e labels
 
+> Registo de fontes, `asd fetch` e `gene_map`: PR 2. Labels: PR 3.
+
 **Objetivo:** um único comando (`asd labels`) que, a partir de ficheiros brutos com versão fixa, produz uma tabela `labels.parquet` com o esquema `ensembl_gene_id | symbol | label | sfari_score | syndromic | source`.
 
 | Tarefa | Detalhe |

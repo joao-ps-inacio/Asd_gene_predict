@@ -1,0 +1,9 @@
+hgnc_id	symbol	name	locus_group	status	entrez_id	ensembl_gene_id	mane_select
+HGNC:14294	SHANK3	SH3 and multiple ankyrin repeat domains 3	protein-coding gene	Approved	85358	ENSG00000251322	
+HGNC:20153	CHD8	chromodomain helicase DNA binding protein 8	protein-coding gene	Approved	57680	ENSG00000100888	
+HGNC:10588	SCN2A	sodium voltage-gated channel alpha subunit 2	protein-coding gene	Approved	6326	ENSG00000136531	
+HGNC:15766	ADNP	activity dependent neuroprotector homeobox	protein-coding gene	Approved	23394	ENSG00000101126	
+HGNC:99991	NOENSG	gene without Ensembl ID	protein-coding gene	Approved	999991		
+HGNC:99992	NOENTREZ	gene without Entrez ID	non-coding RNA	Approved		ENSG00000999992	
+HGNC:99993	OLDSYM	withdrawn entry	protein-coding gene	Entry Withdrawn	999993	ENSG00000999993	
+HGNC:99994	DUPENS	second symbol for CHD8 Ensembl ID	protein-coding gene	Approved	999994	ENSG00000100888	
