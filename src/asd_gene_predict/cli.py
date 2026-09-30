@@ -82,8 +82,33 @@ def gene_map() -> None:
 
 @app.command()
 def labels() -> None:
-    """Etapa 1: construir a lista de genes positivos (SFARI) e negativos (Krishnan)."""
-    raise NotImplementedError("Por implementar — ver CLAUDE.md, Roadmap.")
+    """Etapa 1: construir data/processed/labels.parquet (SFARI + Krishnan)."""
+    from asd_gene_predict.config import load_config
+    from asd_gene_predict.data import labels as lb
+    from asd_gene_predict.data.sources import load_sources
+
+    cfg = load_config()
+    src = load_sources()
+    paths = {n: src[n].path() for n in ("sfari", "krishnan_2016")}
+    missing = [n for n, p in paths.items() if not p.exists()]
+    if missing:
+        typer.echo(f"Faltam ficheiros: {missing}. Correr `asd fetch --stage labels`.", err=True)
+        raise typer.Exit(1)
+
+    gene_map = None
+    if cfg["labels"].get("recover_missing_ensembl"):
+        from asd_gene_predict.data.gene_map import load_gene_map
+
+        gene_map = load_gene_map()
+
+    table = lb.build_labels(
+        lb.read_sfari(paths["sfari"], gene_map),
+        lb.read_krishnan(paths["krishnan_2016"]),
+        lb.load_exclusions(),
+    )
+    out = lb.save_labels(table)
+    typer.echo(lb.summarize(table, lb.positive_sets(cfg)).to_string(index=False))
+    typer.echo(f"Guardado em {out}")
 
 
 @app.command()

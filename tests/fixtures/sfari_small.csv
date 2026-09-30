@@ -1,0 +1,8 @@
+status,gene-symbol,gene-name,ensembl-id,chromosome,genetic-category,gene-score,syndromic,eagle,number-of-reports
+9,SHANK3,x,ENSG00000251322,22,x,1,1,,100
+9,CHD8,x,ENSG00000100888,14,x,1,0,,80
+9,SCN2A,x,ENSG00000136531,2,x,2,0,,50
+9,ABAT,x,ENSG00000183044,16,x,3,0,,7
+9,ADNP,x,ENSG00000101126,20,x,,1,,40
+9,MET,x,,7,x,2,0,,41
+9,OVERLAP,x,ENSG00000000001,1,x,2,0,,3

@@ -38,25 +38,20 @@ sources:
     version: "12.0"
     stage: graph
 
+  # SFARI e Krishnan vêm do repo original da tese, fixados num commit, para reproduzir
+  # exatamente os mesmos labels.
   sfari:
-    description: SFARI Gene — export CSV dos genes humanos (positivos)
-    url: https://gene.sfari.org/tools/
-    filename: SFARI-Gene_genes_01-16-2024release.csv
+    # Export de 19/01/2024 da release de 16/01/2024, tal como editado na tese: 9 IDs Ensembl
+    # em falta preenchidos à mão (ex.: MET, AR, ADA) e RPS10P2-AS1 removido (sem ID).
+    description: SFARI Gene, release de 16/01/2024 editada na tese (positivos)
+    url: https://raw.githubusercontent.com/a59490/Tese_ASD_Gene_Pred/c3e7610062a569e498f9c05d78609d90a8679a9e/01_Data_preparation/0_SFARI/sfari_ed_01_16_2024.csv
+    filename: sfari_ed_01_16_2024.csv
     version: "2024-01-16"
     stage: labels
-    manual: true
-    instructions: >
-      Descarregar o CSV "Human Gene Module" da release de 16/01/2024 (a usada na tese) em
-      https://gene.sfari.org/tools/ e guardá-lo em data/raw/ com este nome.
-      Os termos de utilização do SFARI não permitem pôr o ficheiro no Git.
 
   krishnan_2016:
-    description: Krishnan et al. (2016), Nat Neurosci 19:1454 — genes negativos (Entrez IDs)
-    url: https://doi.org/10.1038/nn.4353
-    filename: krishnan_2016_negatives.csv
+    description: Krishnan et al. (2016), Nat Neurosci 19:1454 — genes negativos, já em Ensembl
+    url: https://raw.githubusercontent.com/a59490/Tese_ASD_Gene_Pred/c3e7610062a569e498f9c05d78609d90a8679a9e/01_Data_preparation/1_pos_neg_genes/krish_ed/Krishnan_genes.csv
+    filename: Krishnan_genes.csv
     version: "2016"
     stage: labels
-    manual: true
-    instructions: >
-      Tabela suplementar de Krishnan et al. (2016) com os genes negativos usados na tese.
-      Guardar em data/raw/ com este nome (CSV com uma coluna `entrez_id`).

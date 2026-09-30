@@ -20,7 +20,7 @@ asd fetch hgnc --force       # voltar a descarregar uma fonte
 ```
 
 - O primeiro download grava o SHA-256 em `configs/sources.lock.yaml`, **que vai para o Git**. Os downloads seguintes são verificados contra esse ficheiro; se a fonte mudar, o `asd fetch` falha em vez de usar dados diferentes em silêncio. Para aceitar a mudança: `asd fetch --update-lock`.
-- **SFARI** e **Krishnan** são fontes manuais: o `asd fetch` indica onde as obter e com que nome guardar em `raw/`.
+- **SFARI** e **Krishnan** vêm do repo original da tese, fixados num commit, para que os labels sejam exatamente os da tese.
 
 Ligações:
 

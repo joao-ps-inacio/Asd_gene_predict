@@ -1,0 +1,11 @@
+# Gerado pelo `asd fetch`. Não editar à mão; usar `asd fetch --update-lock`.
+krishnan_2016:
+  filename: Krishnan_genes.csv
+  locked_at: '2026-09-30'
+  sha256: 31db081d280a74cb1b9b5d01c1c18ecb05a1f0010b40bb9d2caf95dbeb9e0339
+  version: '2016'
+sfari:
+  filename: sfari_ed_01_16_2024.csv
+  locked_at: '2026-09-30'
+  sha256: 4b48983fea02a3aa620af9de7b3d8ae0a081b45caab2560eb1dffba17e04c75f
+  version: '2024-01-16'

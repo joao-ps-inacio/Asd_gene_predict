@@ -34,7 +34,7 @@ def test_repo_registry_is_valid():
     for s in sources.values():
         assert s.filename and s.url and s.stage
         assert "/" not in s.filename
-    assert sources["sfari"].manual and sources["sfari"].instructions
+    assert all(s.instructions for s in sources.values() if s.manual)
 
 
 def test_select_by_stage_and_unknown_name():

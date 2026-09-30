@@ -1,0 +1,11 @@
+# Genes excluídos dos labels, com o motivo. Aplicados pelo `asd labels`.
+exclusions:
+  - ensembl_gene_id: ENSG00000142599
+    note: positivo SFARI (RERE, score 1)
+    reason: Herdado da tese (excluído à mão no treino); motivo por confirmar.
+  - ensembl_gene_id: ENSG00000135636
+    note: negativo Krishnan
+    reason: Herdado da tese (excluído à mão no treino); motivo por confirmar.
+  - ensembl_gene_id: ENSG00000285508
+    note: negativo Krishnan
+    reason: Herdado da tese (excluído à mão no treino); motivo por confirmar.

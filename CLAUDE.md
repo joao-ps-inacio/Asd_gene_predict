@@ -48,7 +48,7 @@ Reescrever de forma limpa e reprodutível o código da tese de mestrado do João
 3. Embeddings guardados como strings dentro de CSV e reconvertidos com `str.replace`. É lento e frágil.
 4. `Requirements.txt` vazio, por isso o ambiente não era reprodutível.
 5. Dados e scripts duplicados em várias pastas, com caminhos relativos ao diretório de execução.
-6. Três genes excluídos à mão sem explicação (`ENSG00000142599`, `ENSG00000135636`, `ENSG00000285508`). **Perguntar ao João porquê.**
+6. Três genes excluídos à mão sem explicação (`ENSG00000142599` = RERE, positivo; `ENSG00000135636` e `ENSG00000285508`, negativos). Estão em `configs/exclusions.yaml`. **Perguntar ao João porquê.**
 7. Grelha do SVM com `sigmoid` repetido e `degree` testado em todos os kernels (só afeta o `poly`), o que multiplica o tempo de treino sem ganho.
 8. DNABERT-2: sequências acima de 10 000 bp eram descartadas em silêncio, dentro de um `try/except` genérico. Registar quais genes ficam de fora.
 9. Não havia seed fixa, pelo que os resultados não eram reprodutíveis.
@@ -60,7 +60,7 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 
 - [x] Estrutura base do repo, `pyproject.toml`, config, CLI esqueleto, teste de fumo, CI (GitHub Actions)
 - [x] Registo de fontes com checksums (`asd fetch`) e tabela de IDs (`asd gene-map`)
-- [ ] **Etapa 1 — Labels**: download/leitura do SFARI e de Krishnan, conversão NCBI→Ensembl, geração dos conjuntos de positivos
+- [x] **Etapa 1 — Labels** (`asd labels`): iguais aos da tese nos 6 conjuntos
 - [ ] **Etapa 2 — Embeddings de proteína** (ProtT5), a primeira fonte a portar
 - [ ] **Etapa 3 — Treino/avaliação** unificado, com métricas corrigidas e resultados em Parquet/CSV
 - [ ] Etapa 2b — Embeddings de DNA (DNABERT-2) e de grafo (GRAPE, só os 5 métodos principais)
