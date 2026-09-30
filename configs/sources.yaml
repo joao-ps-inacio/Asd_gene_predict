@@ -55,3 +55,12 @@ sources:
     filename: Krishnan_genes.csv
     version: "2016"
     stage: labels
+
+  # Embeddings ProtT5 calculados na tese (1 vetor de 1024 por gene, mean pooling), para
+  # reproduzir os resultados sem GPU. Os genes positivos e negativos estão todos neste ficheiro.
+  legacy_prott5:
+    description: Embeddings ProtT5 da tese (03_ML/sequence/Protein/gene_lists/complete.csv.gz)
+    url: https://raw.githubusercontent.com/a59490/Tese_ASD_Gene_Pred/c3e7610062a569e498f9c05d78609d90a8679a9e/03_ML/sequence/Protein/gene_lists/complete.csv.gz
+    filename: legacy_prott5_complete.csv.gz
+    version: thesis-2025
+    stage: embeddings

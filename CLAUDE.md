@@ -66,24 +66,24 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - [ ] Etapa 2b — Embeddings de DNA (DNABERT-2) e de grafo (GRAPE, só os 5 métodos principais)
 - [ ] Etapa 4 — Ranking de todos os genes
 - [ ] Etapa 5 — Enriquecimento por decis e análise de rede
-- [ ] Reproduzir os resultados principais da tese e comparar com as métricas corrigidas
+- [x] Reproduzir os resultados da tese com ProtT5 e comparar com as métricas corrigidas ([`reports/reproducao_prott5.md`](reports/reproducao_prott5.md))
 - [ ] (Futuro) Atualizar para uma release recente do SFARI
 - [ ] (Futuro) App para consultar o score de cada gene
 
 ## Estado atual
 
-**2026-09-29**
-- PR #1 (estrutura base, CI, plano): integrado em `main`.
-- PR #2 (`feat/fetch-gene-map`): `configs/sources.yaml` + `asd fetch` (download com `.part`, SHA-256 gravado em `configs/sources.lock.yaml`) e `asd gene-map` → `data/processed/gene_map.parquet` (HGNC como base, MANE Select, STRING v12). Função `map_ids()` para converter IDs (vai servir o Krishnan NCBI→Ensembl no PR 3). Testado com fixtures offline.
-- Ainda não foi feito um `asd fetch` real (a sessão cloud não chega a esses servidores). O João deve correr `asd fetch --stage gene_map && asd gene-map` localmente e fazer commit do `configs/sources.lock.yaml`.
-- Próximo passo: PR 3 (`asd labels`: SFARI + Krishnan + `configs/exclusions.yaml`). Precisa dos ficheiros originais do SFARI (release 16/01/2024) e de Krishnan.
+**2026-09-30**
+- Em `main`: estrutura, CI, `asd fetch`, `asd gene-map`.
+- PRs abertos, empilhados: #3 `asd labels` → #4 `asd train` → #5 reprodução ProtT5.
+- O repo da tese (`a59490/Tese_ASD_Gene_Pred`) é público e tem os dados: SFARI editado, negativos do Krishnan e embeddings ProtT5. As fontes estão fixadas no commit `c3e7610`.
+- Resultado: a pipeline nova reproduz a tese (AUC da LR calculado como na tese: 0,830 vs. 0,829 publicado). Com as métricas corrigidas, AUC ~0,91 e AUPRC ~0,76 (a tese reportava ~0,53).
+- Próximo: baseline de grau PPI, CV repetida, importar os embeddings de grafo da tese e depois gerar DNA/grafo com a pipeline nova.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
 
 ## Questões em aberto
 
 - Porque foram excluídos os três genes acima?
-- Onde estão os dados grandes originais (embeddings, FASTA, STRING)? Voltar a gerá-los ou há cópia?
-- Há acesso a GPU para voltar a gerar os embeddings de ProtT5 e DNABERT-2?
-- O João ainda tem o CSV do SFARI de 16/01/2024 e a tabela de negativos de Krishnan usados na tese? (necessários para o PR 3)
+- Os embeddings de DNA da tese não estão no repo antigo (só os de proteína e alguns de grafo). Há cópia noutro sítio?
+- Há acesso a GPU para gerar embeddings novos (ESM-2, DNABERT-2)? Para reproduzir o ProtT5 já não é preciso.
 - A tese usou o transcrito canónico do Ensembl; o `gene_map` usa MANE Select. Na grande maioria dos genes codificantes coincidem, mas confirmar se há diferenças relevantes ao reproduzir os resultados.

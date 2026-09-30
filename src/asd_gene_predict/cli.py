@@ -112,9 +112,29 @@ def labels() -> None:
 
 
 @app.command()
-def embed(kind: str = typer.Argument(..., help="dna | protein | graph")) -> None:
+def embed(
+    kind: Annotated[str, typer.Argument(help="dna | protein | graph")],
+    legacy: Annotated[
+        bool, typer.Option("--legacy", help="Importar os embeddings calculados na tese.")
+    ] = False,
+) -> None:
     """Etapa 2: gerar embeddings (DNABERT-2, ProtT5 ou GRAPE)."""
-    raise NotImplementedError("Por implementar — ver CLAUDE.md, Roadmap.")
+    if not legacy:
+        raise NotImplementedError("Só `--legacy` está implementado por agora (ver docs/PLANO.md).")
+    if kind != "protein":
+        raise typer.BadParameter("Com --legacy, só `protein` (ProtT5) está disponível.")
+
+    from asd_gene_predict.data.sources import load_sources
+    from asd_gene_predict.embeddings.io import embedding_path, save_embeddings
+    from asd_gene_predict.embeddings.legacy import LEGACY_META, read_legacy
+
+    src = load_sources()["legacy_prott5"].path()
+    if not src.exists():
+        typer.echo("Falta o ficheiro. Correr `asd fetch legacy_prott5`.", err=True)
+        raise typer.Exit(1)
+    df = read_legacy(src)
+    out = save_embeddings(df, embedding_path("protein_prott5"), LEGACY_META["prott5"])
+    typer.echo(f"{len(df)} genes × {df.shape[1] - 1} dimensões → {out}")
 
 
 @app.command()

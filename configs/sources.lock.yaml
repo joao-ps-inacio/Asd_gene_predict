@@ -4,6 +4,11 @@ krishnan_2016:
   locked_at: '2026-09-30'
   sha256: 31db081d280a74cb1b9b5d01c1c18ecb05a1f0010b40bb9d2caf95dbeb9e0339
   version: '2016'
+legacy_prott5:
+  filename: legacy_prott5_complete.csv.gz
+  locked_at: '2026-09-30'
+  sha256: 63479cead4274bcef3ba89c20092240a0a781d23d6e2dec723f9446bf01e4f1e
+  version: thesis-2025
 sfari:
   filename: sfari_ed_01_16_2024.csv
   locked_at: '2026-09-30'

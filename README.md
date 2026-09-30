@@ -27,6 +27,12 @@ pip install -e ".[graph]"          # para gerar embeddings de grafo
 pytest
 ```
 
+## Resultados
+
+Com as métricas corrigidas, os embeddings ProtT5 dão AUC ~0,91 e AUPRC ~0,76 no teste `cat_1`. A tese reportava AUC 0,83 e AUPRC 0,53. Ver [reports/reproducao_prott5.md](reports/reproducao_prott5.md).
+
+![ProtT5, tese vs corrigido](reports/figures/prott5_tese_vs_corrigido.png)
+
 ## Utilização
 
 ```bash
@@ -38,7 +44,7 @@ asd train --features protein_prott5 --model lr   # 3. treinar e avaliar
 asd rank                   # 4. lista ordenada de genes
 ```
 
-> Estado: em construção. `fetch`, `gene-map`, `labels` e `train` já funcionam; `embed` e `rank` ainda são esqueletos (ver `CLAUDE.md`).
+> Estado: em construção. `fetch`, `gene-map`, `labels`, `train` e `embed protein --legacy` já funcionam; `rank` e a geração de embeddings novos ainda não (ver `CLAUDE.md`).
 
 ## Estrutura
 
