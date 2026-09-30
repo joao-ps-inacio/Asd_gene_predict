@@ -119,10 +119,57 @@ def embed(kind: str = typer.Argument(..., help="dna | protein | graph")) -> None
 
 @app.command()
 def train(
-    model: str = typer.Option("all", help="lr | rf | svm | knn | lgbm | xgb | nb | all"),
+    features: Annotated[
+        str, typer.Option(help="Embeddings a usar, ex.: protein_prott5 (data/processed/emb_*).")
+    ],
+    model: Annotated[
+        list[str], typer.Option(help="lr | svm | rf | knn | lgbm | xgb | nb | all (repetível).")
+    ] = ["all"],  # noqa: B006
+    sets: Annotated[
+        list[str] | None, typer.Option("--set", help="Conjuntos de positivos (por defeito, todos).")
+    ] = None,
+    repeats: Annotated[
+        int | None, typer.Option(help="Repetições da CV (sobrepõe a config).")
+    ] = None,
+    scoring: Annotated[str | None, typer.Option(help="Métrica da afinação (ex.: f1).")] = None,
 ) -> None:
-    """Etapa 3: treinar e avaliar modelos com validação cruzada."""
-    raise NotImplementedError("Por implementar — ver CLAUDE.md, Roadmap.")
+    """Etapa 3: treinar e avaliar modelos com validação cruzada (métricas corrigidas)."""
+    from asd_gene_predict.config import load_config
+    from asd_gene_predict.data.labels import load_labels, positive_sets
+    from asd_gene_predict.embeddings.io import embedding_path, load_embeddings
+    from asd_gene_predict.models import evaluate as ev
+    from asd_gene_predict.models.registry import resolve
+    from asd_gene_predict.paths import REPORTS
+
+    cfg = load_config()
+    cv = cfg["cv"]
+    try:
+        models = resolve(model)
+    except KeyError as e:
+        raise typer.BadParameter(str(e.args[0])) from e
+    all_sets = {s.name: s for s in positive_sets(cfg)}
+    chosen = [all_sets[n] for n in sets] if sets else list(all_sets.values())
+    if cv["test_set"] not in {s.name for s in chosen}:
+        chosen.insert(0, all_sets[cv["test_set"]])
+
+    results = ev.cross_validate(
+        load_embeddings(embedding_path(features)),
+        load_labels(),
+        chosen,
+        models,
+        test_set=cv["test_set"],
+        n_splits=cv["n_splits"],
+        n_repeats=repeats or cv.get("n_repeats", 1),
+        inner_splits=cv.get("inner_splits", 5),
+        scoring=scoring or cv["scoring"],
+        seed=cfg["seed"],
+    )
+    out = REPORTS / "results" / f"{features}__{'-'.join(models)}.parquet"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    results.assign(features=features).to_parquet(out, index=False)
+    metrics = ["average_precision", "roc_auc", "precision_at_k", "mcc"]
+    typer.echo(ev.format_table(results, metrics).to_string())
+    typer.echo(f"Guardado em {out}")
 
 
 @app.command()

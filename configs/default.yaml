@@ -32,5 +32,7 @@ embeddings:
 
 cv:
   n_splits: 5
+  n_repeats: 1           # >1 para CV repetida (intervalos de confiança mais estáveis)
+  inner_splits: 5        # folds da afinação de hiperparâmetros dentro de cada treino
   test_set: cat_1        # na tese, o teste é sempre feito nos genes cat_1
-  scoring: average_precision
+  scoring: average_precision   # métrica da afinação; a tese usava f1

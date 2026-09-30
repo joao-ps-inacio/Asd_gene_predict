@@ -62,7 +62,7 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - [x] Registo de fontes com checksums (`asd fetch`) e tabela de IDs (`asd gene-map`)
 - [x] **Etapa 1 — Labels** (`asd labels`): iguais aos da tese nos 6 conjuntos
 - [ ] **Etapa 2 — Embeddings de proteína** (ProtT5), a primeira fonte a portar
-- [ ] **Etapa 3 — Treino/avaliação** unificado, com métricas corrigidas e resultados em Parquet/CSV
+- [x] **Etapa 3 — Treino/avaliação** (`asd train`): uma só implementação, métricas sobre probabilidades (as da tese ficam como `*_legacy`), resultados em `reports/results/*.parquet`
 - [ ] Etapa 2b — Embeddings de DNA (DNABERT-2) e de grafo (GRAPE, só os 5 métodos principais)
 - [ ] Etapa 4 — Ranking de todos os genes
 - [ ] Etapa 5 — Enriquecimento por decis e análise de rede
