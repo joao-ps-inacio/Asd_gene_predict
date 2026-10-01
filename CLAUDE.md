@@ -79,6 +79,7 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - Reprodução: a pipeline reproduz a tese (AUC da LR à maneira da tese 0,830 vs. 0,829). Corrigido: AUC ~0,91, AUPRC ~0,76.
 - Validação temporal: dos genes acrescentados ao SFARI entre jan/2024 e jul/2026, 55% estavam no top 10% do ranking de proteína da tese (AUC 0,84). O comprimento da proteína sozinho dá AUC 0,79; a proteína ganha-lhe (+0,05, IC95 [0,01; 0,10]). O grafo não ganha de forma significativa.
 - O SFARI 2026 é fonte manual. Nesta sessão foi transcrito do ficheiro do projeto para `data/raw/sfari_2026q2_min.csv` (4 colunas), validado contra o SFARI de 2024 e as listas da tese.
+- Página com os resultados (privada, partilhável pelo João): https://claude.ai/artifact/JLJaWvVfvq8tW3GuSctM5Y
 - Próximo: baseline LOEUF (o gnomAD não é acessível a partir da sessão cloud), CV repetida, refazer o ranking com a pipeline nova.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
