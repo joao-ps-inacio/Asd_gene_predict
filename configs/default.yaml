@@ -3,13 +3,19 @@ seed: 42
 
 labels:
   sfari_release: "2024-01-16"       # versão usada na tese; atualizar para uma release recente
-  positive_sets:                    # combinações de categorias SFARI testadas na tese
-    cat_1: {max_score: 1, syndromic: false}
-    cat_1_sd: {max_score: 1, syndromic: true}
-    cat_1_2: {max_score: 2, syndromic: false}
-    cat_1_2_sd: {max_score: 2, syndromic: true}
-    cat_1_2_3: {max_score: 3, syndromic: false}
+  # Conjuntos de positivos testados na tese: genes SFARI com score <= max_score e, se
+  # with_unscored, também os genes sem score (na release de 2024 são os sindrómicos, "_sd").
+  positive_sets:
+    cat_1: {max_score: 1, with_unscored: false}
+    cat_1_sd: {max_score: 1, with_unscored: true}
+    cat_1_2: {max_score: 2, with_unscored: false}
+    cat_1_2_sd: {max_score: 2, with_unscored: true}
+    cat_1_2_3: {max_score: 3, with_unscored: false}
+    complete: {max_score: 3, with_unscored: true}
   negatives: krishnan_2016
+  # true = recuperar pelo símbolo (via gene_map) os genes SFARI sem ID Ensembl. Não é
+  # preciso para a release da tese (IDs já preenchidos); útil para releases novas.
+  recover_missing_ensembl: false
 
 embeddings:
   dna:
