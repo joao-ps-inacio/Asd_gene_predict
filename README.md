@@ -33,6 +33,8 @@ Com as métricas corrigidas, os embeddings ProtT5 dão AUC ~0,91 e AUPRC ~0,76 n
 
 ![ProtT5, tese vs corrigido](reports/figures/prott5_tese_vs_corrigido.png)
 
+Validação temporal: os genes que o SFARI acrescentou entre 2024 e 2026 já estavam no topo do ranking da tese (55% no top 10%). Ver [reports/validacao_temporal.md](reports/validacao_temporal.md).
+
 ## Utilização
 
 ```bash
@@ -42,6 +44,7 @@ asd labels                 # 1. construir positivos/negativos
 asd embed protein          # 2. gerar embeddings (dna | protein | graph)
 asd train --features protein_prott5 --model lr   # 3. treinar e avaliar
 asd rank                   # 4. lista ordenada de genes
+asd validate-temporal      # 5. validação contra uma release mais recente do SFARI
 ```
 
 > Estado: em construção. `fetch`, `gene-map`, `labels`, `train` e `embed protein --legacy` já funcionam; `rank` e a geração de embeddings novos ainda não (ver `CLAUDE.md`).

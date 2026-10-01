@@ -192,6 +192,96 @@ def train(
     typer.echo(f"Guardado em {out}")
 
 
+@app.command("validate-temporal")
+def validate_temporal(
+    sfari_new: Annotated[
+        str | None,
+        typer.Option(help="CSV do SFARI recente (por defeito, a fonte sfari_2026q2)."),
+    ] = None,
+    shared_pool: Annotated[
+        bool, typer.Option(help="Avaliar todos os scores nos mesmos genes.")
+    ] = True,
+) -> None:
+    """Validação temporal: os rankings da tese anteciparam os genes que o SFARI acrescentou?"""
+    import json
+    from pathlib import Path
+
+    from asd_gene_predict.data import labels as lb
+    from asd_gene_predict.data.sources import load_sources
+    from asd_gene_predict.paths import REPORTS
+    from asd_gene_predict.validation import temporal as tv
+
+    src = load_sources()
+    new_path = Path(sfari_new) if sfari_new else src["sfari_2026q2"].path()
+    needed = {
+        "sfari": src["sfari"].path(),
+        "krishnan_2016": src["krishnan_2016"].path(),
+        "sfari_new": new_path,
+        "legacy_rank_protein": src["legacy_rank_protein"].path(),
+        "legacy_rank_graph": src["legacy_rank_graph"].path(),
+    }
+    missing = [n for n, p in needed.items() if not p.exists()]
+    if missing:
+        typer.echo(f"Faltam ficheiros: {missing}. Correr `asd fetch --stage validation`.", err=True)
+        raise typer.Exit(1)
+
+    old = lb.read_sfari(needed["sfari"])
+    new = lb.read_sfari(new_path)
+    added = tv.new_genes(old, new)
+    exclude = set(old["ensembl_gene_id"]) | set(lb.read_krishnan(needed["krishnan_2016"]))
+
+    scores = {
+        "protein_prott5": tv.read_legacy_ranking(needed["legacy_rank_protein"]),
+        "graph_deepwalk": tv.read_legacy_ranking(needed["legacy_rank_graph"]),
+    }
+    length = None
+    if src["legacy_peptides"].path().exists():
+        length = tv.protein_length(src["legacy_peptides"].path())
+        scores["baseline_protein_length"] = length
+    if src["gnomad_constraint"].path().exists():
+        scores["baseline_loeuf"] = tv.loeuf_score(src["gnomad_constraint"].path())
+
+    positives = set(added["ensembl_gene_id"])
+    table = tv.compare(scores, positives, exclude, shared_pool=shared_pool, confounder=length)
+    out_dir = REPORTS / "results"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    table.to_csv(out_dir / "temporal_validation.csv", float_format="%.6g")
+
+    symbol = dict(zip(new["ensembl_gene_id"], new["symbol"], strict=True))
+    summary = {
+        "new_genes": int(len(added)),
+        "new_by_score": {
+            str(k): int(v) for k, v in added["sfari_score"].value_counts(dropna=False).items()
+        },
+        "promoted": [symbol.get(g, g) for g in tv.promoted_genes(old, new)["ensembl_gene_id"]],
+        "top50_hits": {
+            name: [symbol.get(g, g) for g in tv.top_hits(s, positives, exclude)]
+            for name, s in scores.items()
+        },
+    }
+    if length is not None:
+        pool = {k: v[~v.index.isin(exclude)] for k, v in scores.items()}
+        summary["auc_diff_vs_length"] = {
+            name: dict(
+                zip(
+                    ("diff", "ci_low", "ci_high"),
+                    tv.bootstrap_auc_diff(pool[name], length, positives),
+                    strict=True,
+                )
+            )
+            for name in ("protein_prott5", "graph_deepwalk")
+        }
+    (out_dir / "temporal_validation.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+    cols = ["n_pool", "n_new", "auc", "auprc", "median_percentile", "top1_frac", "top10_frac"]
+    cols += ["auc_adjusted"] if "auc_adjusted" in table else []
+    typer.echo(f"{len(added)} genes novos no SFARI.")
+    typer.echo(table[cols].astype(float).round(3).to_string())
+    typer.echo(f"Guardado em {out_dir / 'temporal_validation.csv'}")
+
+
 @app.command()
 def rank() -> None:
     """Etapa 4: gerar a lista ordenada de genes candidatos."""

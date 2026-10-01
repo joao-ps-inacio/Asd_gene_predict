@@ -1,0 +1,45 @@
+{
+  "new_genes": 127,
+  "new_by_score": {
+    "3": 106,
+    "2": 12,
+    "1": 9
+  },
+  "promoted": [
+    "CAMK2A",
+    "KCNQ2",
+    "SATB2",
+    "TRRAP"
+  ],
+  "top50_hits": {
+    "protein_prott5": [
+      "CHD4",
+      "BPTF",
+      "DOP1A",
+      "DOT1L",
+      "FRYL",
+      "RALGAPA1",
+      "ZNF532"
+    ],
+    "graph_deepwalk": [
+      "RALGAPA1",
+      "NPAS3",
+      "ASTN1"
+    ],
+    "baseline_protein_length": [
+      "KMT2D"
+    ]
+  },
+  "auc_diff_vs_length": {
+    "protein_prott5": {
+      "diff": 0.05348227847177556,
+      "ci_low": 0.011847893734421612,
+      "ci_high": 0.0977738955775146
+    },
+    "graph_deepwalk": {
+      "diff": 0.014282229917278233,
+      "ci_low": -0.045072272835536525,
+      "ci_high": 0.07220440879755584
+    }
+  }
+}

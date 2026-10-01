@@ -64,6 +64,7 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - [ ] **Etapa 2 — Embeddings de proteína** (ProtT5), a primeira fonte a portar
 - [x] **Etapa 3 — Treino/avaliação** (`asd train`): uma só implementação, métricas sobre probabilidades (as da tese ficam como `*_legacy`), resultados em `reports/results/*.parquet`
 - [ ] Etapa 2b — Embeddings de DNA (DNABERT-2) e de grafo (GRAPE, só os 5 métodos principais)
+- [x] Validação temporal com o SFARI 2026 Q2 (`asd validate-temporal`, [`reports/validacao_temporal.md`](reports/validacao_temporal.md))
 - [ ] Etapa 4 — Ranking de todos os genes
 - [ ] Etapa 5 — Enriquecimento por decis e análise de rede
 - [x] Reproduzir os resultados da tese com ProtT5 e comparar com as métricas corrigidas ([`reports/reproducao_prott5.md`](reports/reproducao_prott5.md))
@@ -72,12 +73,13 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 
 ## Estado atual
 
-**2026-09-30**
+**2026-10-01**
 - Em `main`: estrutura, CI, `asd fetch`, `asd gene-map`.
-- PRs abertos, empilhados: #3 `asd labels` → #4 `asd train` → #5 reprodução ProtT5.
-- O repo da tese (`a59490/Tese_ASD_Gene_Pred`) é público e tem os dados: SFARI editado, negativos do Krishnan e embeddings ProtT5. As fontes estão fixadas no commit `c3e7610`.
-- Resultado: a pipeline nova reproduz a tese (AUC da LR calculado como na tese: 0,830 vs. 0,829 publicado). Com as métricas corrigidas, AUC ~0,91 e AUPRC ~0,76 (a tese reportava ~0,53).
-- Próximo: baseline de grau PPI, CV repetida, importar os embeddings de grafo da tese e depois gerar DNA/grafo com a pipeline nova.
+- PRs empilhados: #3 `asd labels` → #4 `asd train` → #5 reprodução ProtT5 → #6 validação temporal.
+- Reprodução: a pipeline reproduz a tese (AUC da LR à maneira da tese 0,830 vs. 0,829). Corrigido: AUC ~0,91, AUPRC ~0,76.
+- Validação temporal: dos genes acrescentados ao SFARI entre jan/2024 e jul/2026, 55% estavam no top 10% do ranking de proteína da tese (AUC 0,84). O comprimento da proteína sozinho dá AUC 0,79; a proteína ganha-lhe (+0,05, IC95 [0,01; 0,10]). O grafo não ganha de forma significativa.
+- O SFARI 2026 é fonte manual. Nesta sessão foi transcrito do ficheiro do projeto para `data/raw/sfari_2026q2_min.csv` (4 colunas), validado contra o SFARI de 2024 e as listas da tese.
+- Próximo: baseline LOEUF (o gnomAD não é acessível a partir da sessão cloud), CV repetida, refazer o ranking com a pipeline nova.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
 
