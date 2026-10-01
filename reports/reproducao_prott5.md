@@ -58,6 +58,7 @@ Mesmo assim, as diferenças são de ~0,01 e mostram que a mudança nos resultado
 
 ## Limitações e próximos passos
 
+- Random Forest, LightGBM e XGBoost ainda não correram: com as grelhas atuais demoram horas em 2 CPUs. Na tese, nenhum deles superou a LR no `cat_1`. O segundo comando de "Como reproduzir" corre-os numa máquina com mais CPUs; depois basta voltar a correr o script do relatório.
 - Com 5 folds, o desvio-padrão do AUPRC é ~0,06. Para comparar modelos com confiança, é preciso CV repetida (`asd train --repeats 5`).
 - Os genes do SFARI são mais estudados do que a média. Falta um baseline que use apenas o grau do gene na rede PPI, para confirmar que os embeddings captam mais do que esse viés.
 - Falta o mesmo exercício para os embeddings de DNA (DNABERT-2) e de grafo (GRAPE).
