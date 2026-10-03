@@ -14,7 +14,7 @@ Reescrever de forma limpa e reprodutível o código da tese de mestrado do João
 - `main` está sempre estável. Cada tarefa vai num branch (`feat/...`, `fix/...`, `setup/...`) com um PR para o João rever.
 - Descrição do PR curta: 2 a 4 linhas sobre o que muda e, se houver, uma checklist "Antes do merge". Nada de tabelas, detalhes de implementação ou perguntas; os detalhes ficam no código, nos commits e neste ficheiro.
 - No fim de cada bloco de trabalho: fazer push e atualizar a secção **Estado atual** deste ficheiro.
-- Documentação em português; código, nomes de funções e docstrings em inglês.
+- Documentação em português; código, nomes de funções e docstrings em inglês. Exceção: o `README.md` e o notebook de demonstração são em inglês (montra para recrutadores; decisão do João, 2026-10-03).
 - Dados nunca vão para o Git. Tabelas intermédias guardadas em **Parquet**, não em CSV com vetores em texto.
 - Caminhos sempre via `asd_gene_predict.paths`, nunca relativos ao diretório atual.
 - Parâmetros em `configs/*.yaml`, não hardcoded nos scripts.
@@ -62,28 +62,32 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - [x] Registo de fontes com checksums (`asd fetch`) e tabela de IDs (`asd gene-map`)
 - [x] **Etapa 1 — Labels** (`asd labels`): iguais aos da tese nos 6 conjuntos
 - [ ] **Etapa 2 — Embeddings de proteína** (ProtT5), a primeira fonte a portar
-- [ ] **Etapa 3 — Treino/avaliação** unificado, com métricas corrigidas e resultados em Parquet/CSV
+- [x] **Etapa 3 — Treino/avaliação** (`asd train`): uma só implementação, métricas sobre probabilidades (as da tese ficam como `*_legacy`), resultados em `reports/results/*.parquet`
 - [ ] Etapa 2b — Embeddings de DNA (DNABERT-2) e de grafo (GRAPE, só os 5 métodos principais)
+- [x] Validação temporal com o SFARI 2026 Q2 (`asd validate-temporal`, [`reports/validacao_temporal.md`](reports/validacao_temporal.md))
 - [ ] Etapa 4 — Ranking de todos os genes
 - [ ] Etapa 5 — Enriquecimento por decis e análise de rede
-- [ ] Reproduzir os resultados principais da tese e comparar com as métricas corrigidas
+- [x] Reproduzir os resultados da tese com ProtT5 e comparar com as métricas corrigidas ([`reports/reproducao_prott5.md`](reports/reproducao_prott5.md))
 - [ ] (Futuro) Atualizar para uma release recente do SFARI
 - [ ] (Futuro) App para consultar o score de cada gene
 
 ## Estado atual
 
-**2026-09-29**
-- PR #1 (estrutura base, CI, plano): integrado em `main`.
-- PR #2 (`feat/fetch-gene-map`): `configs/sources.yaml` + `asd fetch` (download com `.part`, SHA-256 gravado em `configs/sources.lock.yaml`) e `asd gene-map` → `data/processed/gene_map.parquet` (HGNC como base, MANE Select, STRING v12). Função `map_ids()` para converter IDs (vai servir o Krishnan NCBI→Ensembl no PR 3). Testado com fixtures offline.
-- Ainda não foi feito um `asd fetch` real (a sessão cloud não chega a esses servidores). O João deve correr `asd fetch --stage gene_map && asd gene-map` localmente e fazer commit do `configs/sources.lock.yaml`.
-- Próximo passo: PR 3 (`asd labels`: SFARI + Krishnan + `configs/exclusions.yaml`). Precisa dos ficheiros originais do SFARI (release 16/01/2024) e de Krishnan.
+**2026-10-01**
+- Em `main`: estrutura, CI, `asd fetch`, `asd gene-map`.
+- PRs empilhados: #3 `asd labels` → #4 `asd train` → #5 reprodução ProtT5 → #6 validação temporal.
+- Reprodução: a pipeline reproduz a tese (AUC da LR à maneira da tese 0,830 vs. 0,829). Corrigido: AUC ~0,91, AUPRC ~0,76.
+- Validação temporal: dos genes acrescentados ao SFARI entre jan/2024 e jul/2026, 55% estavam no top 10% do ranking de proteína da tese (AUC 0,84). O comprimento da proteína sozinho dá AUC 0,79; a proteína ganha-lhe (+0,05, IC95 [0,01; 0,10]). O grafo não ganha de forma significativa.
+- O SFARI 2026 é fonte manual. Nesta sessão foi transcrito do ficheiro do projeto para `data/raw/sfari_2026q2_min.csv` (4 colunas), validado contra o SFARI de 2024 e as listas da tese.
+- Página com os resultados (privada, partilhável pelo João): https://claude.ai/artifact/JLJaWvVfvq8tW3GuSctM5Y
+- README em inglês com resultados e `notebooks/demo.ipynb` executado (PR #7). O João vai importar o repo antigo para a conta nova via GitHub Importer e fixar este repo no perfil depois do merge.
+- Próximo: baseline LOEUF (o gnomAD não é acessível a partir da sessão cloud), CV repetida, refazer o ranking com a pipeline nova.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
 
 ## Questões em aberto
 
 - Porque foram excluídos os três genes acima?
-- Onde estão os dados grandes originais (embeddings, FASTA, STRING)? Voltar a gerá-los ou há cópia?
-- Há acesso a GPU para voltar a gerar os embeddings de ProtT5 e DNABERT-2?
-- O João ainda tem o CSV do SFARI de 16/01/2024 e a tabela de negativos de Krishnan usados na tese? (necessários para o PR 3)
+- Os embeddings de DNA da tese não estão no repo antigo (só os de proteína e alguns de grafo). Há cópia noutro sítio?
+- Há acesso a GPU para gerar embeddings novos (ESM-2, DNABERT-2)? Para reproduzir o ProtT5 já não é preciso.
 - A tese usou o transcrito canónico do Ensembl; o `gene_map` usa MANE Select. Na grande maioria dos genes codificantes coincidem, mas confirmar se há diferenças relevantes ao reproduzir os resultados.

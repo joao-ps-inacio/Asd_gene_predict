@@ -112,17 +112,174 @@ def labels() -> None:
 
 
 @app.command()
-def embed(kind: str = typer.Argument(..., help="dna | protein | graph")) -> None:
+def embed(
+    kind: Annotated[str, typer.Argument(help="dna | protein | graph")],
+    legacy: Annotated[
+        bool, typer.Option("--legacy", help="Importar os embeddings calculados na tese.")
+    ] = False,
+) -> None:
     """Etapa 2: gerar embeddings (DNABERT-2, ProtT5 ou GRAPE)."""
-    raise NotImplementedError("Por implementar — ver CLAUDE.md, Roadmap.")
+    if not legacy:
+        raise NotImplementedError("Só `--legacy` está implementado por agora (ver docs/PLANO.md).")
+    if kind != "protein":
+        raise typer.BadParameter("Com --legacy, só `protein` (ProtT5) está disponível.")
+
+    from asd_gene_predict.data.sources import load_sources
+    from asd_gene_predict.embeddings.io import embedding_path, save_embeddings
+    from asd_gene_predict.embeddings.legacy import LEGACY_META, read_legacy
+
+    src = load_sources()["legacy_prott5"].path()
+    if not src.exists():
+        typer.echo("Falta o ficheiro. Correr `asd fetch legacy_prott5`.", err=True)
+        raise typer.Exit(1)
+    df = read_legacy(src)
+    out = save_embeddings(df, embedding_path("protein_prott5"), LEGACY_META["prott5"])
+    typer.echo(f"{len(df)} genes × {df.shape[1] - 1} dimensões → {out}")
 
 
 @app.command()
 def train(
-    model: str = typer.Option("all", help="lr | rf | svm | knn | lgbm | xgb | nb | all"),
+    features: Annotated[
+        str, typer.Option(help="Embeddings a usar, ex.: protein_prott5 (data/processed/emb_*).")
+    ],
+    model: Annotated[
+        list[str], typer.Option(help="lr | svm | rf | knn | lgbm | xgb | nb | all (repetível).")
+    ] = ["all"],  # noqa: B006
+    sets: Annotated[
+        list[str] | None, typer.Option("--set", help="Conjuntos de positivos (por defeito, todos).")
+    ] = None,
+    repeats: Annotated[
+        int | None, typer.Option(help="Repetições da CV (sobrepõe a config).")
+    ] = None,
+    scoring: Annotated[str | None, typer.Option(help="Métrica da afinação (ex.: f1).")] = None,
 ) -> None:
-    """Etapa 3: treinar e avaliar modelos com validação cruzada."""
-    raise NotImplementedError("Por implementar — ver CLAUDE.md, Roadmap.")
+    """Etapa 3: treinar e avaliar modelos com validação cruzada (métricas corrigidas)."""
+    from asd_gene_predict.config import load_config
+    from asd_gene_predict.data.labels import load_labels, positive_sets
+    from asd_gene_predict.embeddings.io import embedding_path, load_embeddings
+    from asd_gene_predict.models import evaluate as ev
+    from asd_gene_predict.models.registry import resolve
+    from asd_gene_predict.paths import REPORTS
+
+    cfg = load_config()
+    cv = cfg["cv"]
+    try:
+        models = resolve(model)
+    except KeyError as e:
+        raise typer.BadParameter(str(e.args[0])) from e
+    all_sets = {s.name: s for s in positive_sets(cfg)}
+    chosen = [all_sets[n] for n in sets] if sets else list(all_sets.values())
+    if cv["test_set"] not in {s.name for s in chosen}:
+        chosen.insert(0, all_sets[cv["test_set"]])
+
+    results = ev.cross_validate(
+        load_embeddings(embedding_path(features)),
+        load_labels(),
+        chosen,
+        models,
+        test_set=cv["test_set"],
+        n_splits=cv["n_splits"],
+        n_repeats=repeats or cv.get("n_repeats", 1),
+        inner_splits=cv.get("inner_splits", 5),
+        scoring=scoring or cv["scoring"],
+        seed=cfg["seed"],
+    )
+    out = REPORTS / "results" / f"{features}__{'-'.join(models)}.parquet"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    results.assign(features=features).to_parquet(out, index=False)
+    metrics = ["average_precision", "roc_auc", "precision_at_k", "mcc"]
+    typer.echo(ev.format_table(results, metrics).to_string())
+    typer.echo(f"Guardado em {out}")
+
+
+@app.command("validate-temporal")
+def validate_temporal(
+    sfari_new: Annotated[
+        str | None,
+        typer.Option(help="CSV do SFARI recente (por defeito, a fonte sfari_2026q2)."),
+    ] = None,
+    shared_pool: Annotated[
+        bool, typer.Option(help="Avaliar todos os scores nos mesmos genes.")
+    ] = True,
+) -> None:
+    """Validação temporal: os rankings da tese anteciparam os genes que o SFARI acrescentou?"""
+    import json
+    from pathlib import Path
+
+    from asd_gene_predict.data import labels as lb
+    from asd_gene_predict.data.sources import load_sources
+    from asd_gene_predict.paths import REPORTS
+    from asd_gene_predict.validation import temporal as tv
+
+    src = load_sources()
+    new_path = Path(sfari_new) if sfari_new else src["sfari_2026q2"].path()
+    needed = {
+        "sfari": src["sfari"].path(),
+        "krishnan_2016": src["krishnan_2016"].path(),
+        "sfari_new": new_path,
+        "legacy_rank_protein": src["legacy_rank_protein"].path(),
+        "legacy_rank_graph": src["legacy_rank_graph"].path(),
+    }
+    missing = [n for n, p in needed.items() if not p.exists()]
+    if missing:
+        typer.echo(f"Faltam ficheiros: {missing}. Correr `asd fetch --stage validation`.", err=True)
+        raise typer.Exit(1)
+
+    old = lb.read_sfari(needed["sfari"])
+    new = lb.read_sfari(new_path)
+    added = tv.new_genes(old, new)
+    exclude = set(old["ensembl_gene_id"]) | set(lb.read_krishnan(needed["krishnan_2016"]))
+
+    scores = {
+        "protein_prott5": tv.read_legacy_ranking(needed["legacy_rank_protein"]),
+        "graph_deepwalk": tv.read_legacy_ranking(needed["legacy_rank_graph"]),
+    }
+    length = None
+    if src["legacy_peptides"].path().exists():
+        length = tv.protein_length(src["legacy_peptides"].path())
+        scores["baseline_protein_length"] = length
+    if src["gnomad_constraint"].path().exists():
+        scores["baseline_loeuf"] = tv.loeuf_score(src["gnomad_constraint"].path())
+
+    positives = set(added["ensembl_gene_id"])
+    table = tv.compare(scores, positives, exclude, shared_pool=shared_pool, confounder=length)
+    out_dir = REPORTS / "results"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    table.to_csv(out_dir / "temporal_validation.csv", float_format="%.6g")
+
+    symbol = dict(zip(new["ensembl_gene_id"], new["symbol"], strict=True))
+    summary = {
+        "new_genes": int(len(added)),
+        "new_by_score": {
+            str(k): int(v) for k, v in added["sfari_score"].value_counts(dropna=False).items()
+        },
+        "promoted": [symbol.get(g, g) for g in tv.promoted_genes(old, new)["ensembl_gene_id"]],
+        "top50_hits": {
+            name: [symbol.get(g, g) for g in tv.top_hits(s, positives, exclude)]
+            for name, s in scores.items()
+        },
+    }
+    if length is not None:
+        pool = {k: v[~v.index.isin(exclude)] for k, v in scores.items()}
+        summary["auc_diff_vs_length"] = {
+            name: dict(
+                zip(
+                    ("diff", "ci_low", "ci_high"),
+                    tv.bootstrap_auc_diff(pool[name], length, positives),
+                    strict=True,
+                )
+            )
+            for name in ("protein_prott5", "graph_deepwalk")
+        }
+    (out_dir / "temporal_validation.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+    cols = ["n_pool", "n_new", "auc", "auprc", "median_percentile", "top1_frac", "top10_frac"]
+    cols += ["auc_adjusted"] if "auc_adjusted" in table else []
+    typer.echo(f"{len(added)} genes novos no SFARI.")
+    typer.echo(table[cols].astype(float).round(3).to_string())
+    typer.echo(f"Guardado em {out_dir / 'temporal_validation.csv'}")
 
 
 @app.command()

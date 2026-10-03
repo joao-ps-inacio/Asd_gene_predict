@@ -4,6 +4,26 @@ krishnan_2016:
   locked_at: '2026-09-30'
   sha256: 31db081d280a74cb1b9b5d01c1c18ecb05a1f0010b40bb9d2caf95dbeb9e0339
   version: '2016'
+legacy_peptides:
+  filename: legacy_peptide_seq.csv
+  locked_at: '2026-10-01'
+  sha256: fd340649330033476e49b645cc509f49351b7b3742c71019a1ee87897e58898b
+  version: thesis-2025
+legacy_prott5:
+  filename: legacy_prott5_complete.csv.gz
+  locked_at: '2026-09-30'
+  sha256: 63479cead4274bcef3ba89c20092240a0a781d23d6e2dec723f9446bf01e4f1e
+  version: thesis-2025
+legacy_rank_graph:
+  filename: legacy_rank_graph_deepwalk_lr.csv
+  locked_at: '2026-10-01'
+  sha256: 54b6c36789163ca3d0d3a025f37aa34adb170ee3140886a922bf3fbe34c829da
+  version: thesis-2025
+legacy_rank_protein:
+  filename: legacy_rank_protein_xgb.csv
+  locked_at: '2026-10-01'
+  sha256: 5dc3f8471363a5f2e6d2fed460e8e627ffcd3893105d1ae8a789c2ff098795a0
+  version: thesis-2025
 sfari:
   filename: sfari_ed_01_16_2024.csv
   locked_at: '2026-09-30'
