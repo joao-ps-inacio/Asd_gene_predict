@@ -14,7 +14,7 @@ Reescrever de forma limpa e reprodutível o código da tese de mestrado do João
 - `main` está sempre estável. Cada tarefa vai num branch (`feat/...`, `fix/...`, `setup/...`) com um PR para o João rever.
 - Descrição do PR curta: 2 a 4 linhas sobre o que muda e, se houver, uma checklist "Antes do merge". Nada de tabelas, detalhes de implementação ou perguntas; os detalhes ficam no código, nos commits e neste ficheiro.
 - No fim de cada bloco de trabalho: fazer push e atualizar a secção **Estado atual** deste ficheiro.
-- Documentação em português; código, nomes de funções e docstrings em inglês.
+- Documentação em português; código, nomes de funções e docstrings em inglês. Exceção: o `README.md` e o notebook de demonstração são em inglês (montra para recrutadores; decisão do João, 2026-10-03).
 - Dados nunca vão para o Git. Tabelas intermédias guardadas em **Parquet**, não em CSV com vetores em texto.
 - Caminhos sempre via `asd_gene_predict.paths`, nunca relativos ao diretório atual.
 - Parâmetros em `configs/*.yaml`, não hardcoded nos scripts.
@@ -80,6 +80,7 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - Validação temporal: dos genes acrescentados ao SFARI entre jan/2024 e jul/2026, 55% estavam no top 10% do ranking de proteína da tese (AUC 0,84). O comprimento da proteína sozinho dá AUC 0,79; a proteína ganha-lhe (+0,05, IC95 [0,01; 0,10]). O grafo não ganha de forma significativa.
 - O SFARI 2026 é fonte manual. Nesta sessão foi transcrito do ficheiro do projeto para `data/raw/sfari_2026q2_min.csv` (4 colunas), validado contra o SFARI de 2024 e as listas da tese.
 - Página com os resultados (privada, partilhável pelo João): https://claude.ai/artifact/JLJaWvVfvq8tW3GuSctM5Y
+- README em inglês com resultados e `notebooks/demo.ipynb` executado (PR #7). O João vai importar o repo antigo para a conta nova via GitHub Importer e fixar este repo no perfil depois do merge.
 - Próximo: baseline LOEUF (o gnomAD não é acessível a partir da sessão cloud), CV repetida, refazer o ranking com a pipeline nova.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
