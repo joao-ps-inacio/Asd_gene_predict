@@ -39,7 +39,7 @@ BEFORE, AFTER = "#86b6ef", "#1c5cab"
 def load_runs() -> pd.DataFrame:
     files = sorted(RESULTS.glob("protein_prott5__*.parquet"))
     if not files:
-        raise FileNotFoundError("Sem resultados. Correr `asd train --features protein_prott5`.")
+        raise FileNotFoundError("No results. Run `asd train --features protein_prott5` first.")
     runs = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
     return runs.drop_duplicates(["set", "model", "repeat", "fold"], keep="last")
 
@@ -74,7 +74,7 @@ def dumbbell(df: pd.DataFrame, before: str, after: str, title: str, ax) -> None:
         edgecolor=SURFACE,
         linewidth=2,
         zorder=2,
-        label="Tese (AUC/AUPRC sobre 0/1)",
+        label="Thesis (AUC/AUPRC on 0/1 predictions)",
     )
     ax.scatter(
         df[after],
@@ -84,7 +84,7 @@ def dumbbell(df: pd.DataFrame, before: str, after: str, title: str, ax) -> None:
         edgecolor=SURFACE,
         linewidth=2,
         zorder=3,
-        label="Corrigido (sobre probabilidades)",
+        label="Corrected (on probabilities)",
     )
     for yi, (b, a) in enumerate(zip(df[before], df[after], strict=True)):
         ax.annotate(
@@ -120,22 +120,22 @@ def figure(summ: pd.DataFrame) -> None:
         handles, labels, loc="lower center", ncol=2, frameon=False, fontsize=9, labelcolor=INK
     )
     fig.suptitle(
-        "ProtT5, conjunto cat_1 (média de 5 folds)", x=0.01, ha="left", color=INK, fontsize=13
+        "ProtT5, cat_1 test genes (mean of 5 folds)", x=0.01, ha="left", color=INK, fontsize=13
     )
     fig.tight_layout(rect=(0, 0.08, 1, 1))
     FIGURES.mkdir(parents=True, exist_ok=True)
-    fig.savefig(FIGURES / "prott5_tese_vs_corrigido.png", dpi=160, facecolor=SURFACE)
+    fig.savefig(FIGURES / "prott5_thesis_vs_corrected.png", dpi=160, facecolor=SURFACE)
 
 
 SET_ORDER = ["cat_1", "cat_1_sd", "cat_1_2", "cat_1_2_sd", "cat_1_2_3", "complete"]
-REPORT = REPORTS / "reproducao_prott5.md"
+REPORT = REPORTS / "prott5_reproduction.md"
 
 
 def table_cat1(summ: pd.DataFrame) -> str:
     rows = summ[(summ["set"] == "cat_1") & summ["thesis_roc_auc_mean"].notna()]
     lines = [
-        "| Modelo | AUC tese | AUC (cálculo da tese, pipeline nova) | **AUC corrigido** "
-        "| AUPRC tese | **AUPRC corrigido** |",
+        "| Model | Thesis AUC | AUC (thesis formula, new pipeline) | **Corrected AUC** "
+        "| Thesis AUPRC | **Corrected AUPRC** |",
         "|---|---:|---:|---:|---:|---:|",
     ]
     for _, r in rows.sort_values("roc_auc_mean", ascending=False).iterrows():
@@ -153,7 +153,7 @@ def table_sets(summ: pd.DataFrame) -> str:
     wide = wide.reindex([s for s in SET_ORDER if s in wide.index]).dropna(axis=1)
     models = [m for m in MODEL_NAMES if m in wide.columns]
     lines = [
-        "| Positivos no treino | " + " | ".join(MODEL_NAMES[m] for m in models) + " |",
+        "| Training positives | " + " | ".join(MODEL_NAMES[m] for m in models) + " |",
         "|---|" + "---:|" * len(models),
     ]
     for name, row in wide[models].iterrows():

@@ -18,14 +18,14 @@ from matplotlib.lines import Line2D  # noqa: E402
 from asd_gene_predict.paths import REPORTS  # noqa: E402
 
 RESULTS = REPORTS / "results"
-REPORT = REPORTS / "validacao_temporal.md"
-FIGURE = REPORTS / "figures" / "validacao_temporal.png"
+REPORT = REPORTS / "temporal_validation.md"
+FIGURE = REPORTS / "figures" / "temporal_validation.png"
 
 NAMES = {
-    "protein_prott5": "Proteína (ProtT5)",
-    "graph_deepwalk": "Grafo (DeepWalk)",
-    "baseline_protein_length": "Comprimento da proteína",
-    "baseline_loeuf": "Restrição genética (LOEUF)",
+    "protein_prott5": "Protein (ProtT5)",
+    "graph_deepwalk": "Graph (DeepWalk)",
+    "baseline_protein_length": "Protein length",
+    "baseline_loeuf": "Gene constraint (LOEUF)",
 }
 # reference palette (dataviz skill): categorical slots 1-2; baselines in neutral grey
 COLORS = {
@@ -69,11 +69,11 @@ def figure(table: pd.DataFrame) -> None:
             left.bar_label(bars, fmt="%.0f%%", fontsize=8, color=INK, padding=2)
     for xi, top in zip(x, (1, 5, 10), strict=True):
         left.hlines(top, xi - 0.42, xi + 0.42, colors=INK, linestyles=(0, (3, 2)), linewidth=1)
-    left.plot([], [], color=INK, linestyle=(0, (3, 2)), linewidth=1, label="Ao acaso")
+    left.plot([], [], color=INK, linestyle=(0, (3, 2)), linewidth=1, label="Random")
     left.set_xticks(x, ["Top 1%", "Top 5%", "Top 10%"], color=INK)
-    left.set_ylabel("% dos genes novos do SFARI", color=MUTED, fontsize=9)
+    left.set_ylabel("% of new SFARI genes", color=MUTED, fontsize=9)
     left.set_title(
-        "Onde ficaram os genes acrescentados ao SFARI depois de 2024",
+        "Genes added to SFARI after 2024, by ranking position",
         loc="left",
         color=INK,
         fontsize=11,
@@ -102,12 +102,12 @@ def figure(table: pd.DataFrame) -> None:
         zorder=3,
         edgecolor=[COLORS[n] for n in order],
         linewidth=2,
-        label="AUC entre genes de comprimento semelhante",
+        label="AUC among genes of similar length",
     )
     right.axvline(0.5, color=INK, linestyle=(0, (3, 2)), linewidth=1)
     right.set_yticks(y, [NAMES[n] for n in order], color=INK, fontsize=9)
     right.set_xlim(0.45, 0.9)
-    right.set_title("Descontando o tamanho do gene", loc="left", color=INK, fontsize=11)
+    right.set_title("Controlling for gene length", loc="left", color=INK, fontsize=11)
     handles = [
         Line2D([], [], marker="o", linestyle="", color=MUTED, markersize=7, label="AUC"),
         Line2D(
@@ -119,7 +119,7 @@ def figure(table: pd.DataFrame) -> None:
             color=MUTED,
             markeredgewidth=2,
             markersize=7,
-            label="AUC entre genes de tamanho semelhante",
+            label="AUC among genes of similar length",
         ),
     ]
     right.legend(
@@ -142,7 +142,7 @@ def figure(table: pd.DataFrame) -> None:
 
 def table_md(table: pd.DataFrame) -> str:
     lines = [
-        "| Score | AUC | AUC (ajustada ao comprimento) | Top 1% | Top 10% | Percentil mediano |",
+        "| Score | AUC | Length-adjusted AUC | Top 1% | Top 10% | Median percentile |",
         "|---|---:|---:|---:|---:|---:|",
     ]
     for name, r in table.iterrows():

@@ -11,23 +11,23 @@ This repository is a clean, reproducible rewrite of my MSc thesis, *Predicting A
 
 ## Key results
 
-**1. The thesis under-reported its own model.** The thesis computed ROC-AUC on hard 0/1 predictions, which keeps a single point of the ROC curve. Re-running the same data through the new pipeline reproduces the published numbers almost exactly. Computing the metrics on predicted probabilities instead:
+**1. Corrected evaluation: ROC-AUC 0.83 → 0.91.** The thesis computed ROC-AUC on hard 0/1 predictions, which keeps a single point of the ROC curve. Re-running the same data through the new pipeline reproduces the published numbers almost exactly. Computing the metrics on predicted probabilities instead:
 
 | ProtT5 + Logistic Regression, test on SFARI category 1 genes | Thesis | This repo |
 |---|---:|---:|
 | ROC-AUC | 0.83 | **0.91** |
 | Average precision (random = 0.23) | 0.53 | **0.77** |
 
-**2. The thesis ranking anticipated genes that SFARI added two years later.** The model was trained on the January 2024 SFARI release. Of the 127 genes SFARI added by July 2026, **55% were already in the top 10%** of ~16,000 unlabelled genes (random: 10%, p < 10⁻³⁰). Seven of the top 50 candidates were later added to SFARI (CHD4, BPTF, DOP1A, DOT1L, FRYL, RALGAPA1, ZNF532).
+**2. Temporal validation: the ranking anticipated genes SFARI added two years later.** The model was trained on the January 2024 SFARI release. Of the 127 genes SFARI added by July 2026, **55% were already in the top 10%** of ~16,000 unlabelled genes (random: 10%, p < 10⁻³⁰). Seven of the top 50 candidates were later added to SFARI (CHD4, BPTF, DOP1A, DOT1L, FRYL, RALGAPA1, ZNF532).
 
-**3. The signal is not just gene size.** Long genes are discovered more often, and ranking by protein length alone already gives AUC 0.79. The protein-embedding ranking beats it: +0.05 AUC (95% CI 0.01–0.10), and keeps AUC 0.80 among genes of similar length.
+**3. Beyond gene size.** Long genes are discovered more often, and ranking by protein length alone already gives AUC 0.79. The protein-embedding ranking beats it: +0.05 AUC (95% CI 0.01–0.10), and keeps AUC 0.80 among genes of similar length.
 
 <p>
   <img src="reports/figures/roc_thesis_vs_corrected.png" alt="ROC curve, AUC 0.91, versus the single-point AUC of 0.83 reported in the thesis" width="40%">
   <img src="reports/figures/temporal_validation_en.png" alt="Share of new SFARI genes found in the top 1, 5 and 10 percent of each ranking" width="56%">
 </p>
 
-Detailed reports (in Portuguese): [reproduction of the thesis results](reports/reproducao_prott5.md) · [temporal validation](reports/validacao_temporal.md).
+Detailed reports: [reproduction of the thesis results](reports/prott5_reproduction.md) · [temporal validation](reports/temporal_validation.md) · [changes from the thesis code](docs/changes_from_thesis.md).
 
 ## Approach
 
@@ -85,13 +85,14 @@ asd train --features protein_prott5 --model lr --set cat_1
 - Versioned, checksummed inputs; parameters in YAML; fixed random seeds.
 - Embeddings and tables stored as Parquet, not as vectors serialised into CSV text.
 - Tests on small fixtures that run offline, plus lint (ruff) on every pull request through GitHub Actions.
-- Bugs found in the original code are listed and fixed in [`CLAUDE.md`](CLAUDE.md), including the AUC computation and an XGBoost class-weight parameter that was silently ignored.
+- Issues found in the original code, and how each was fixed, are listed in [`docs/changes_from_thesis.md`](docs/changes_from_thesis.md). They include the AUC computation and an XGBoost class-weight parameter that was silently ignored.
 
 ## Repository layout
 
 ```
 configs/      pipeline parameters, data sources and checksums
 notebooks/    end-to-end demo
+docs/         changes from the thesis code, project plan
 reports/      result reports and figures
 scripts/      report generation
 src/asd_gene_predict/
