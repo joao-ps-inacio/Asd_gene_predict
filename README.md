@@ -3,65 +3,80 @@
 [![CI](https://github.com/joao-ps-inacio/Asd_gene_predict/actions/workflows/ci.yml/badge.svg)](https://github.com/joao-ps-inacio/Asd_gene_predict/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 
-Ranking human genes by their likelihood of being autism (ASD) risk genes, using embeddings from a protein language model (ProtT5), a DNA language model (DNABERT-2) and the STRING protein-interaction network.
+Machine-learning pipeline that ranks human genes by their likelihood of being autism (ASD) risk genes. A reproducible rewrite of my MSc thesis.
 
-This repository is a clean, reproducible rewrite of my MSc thesis, *Predicting Autism Risk Genes Using Graph and Sequence Embeddings* (Faculdade de Ciências da Universidade de Lisboa / Instituto Nacional de Saúde Doutor Ricardo Jorge, 2025). The original thesis code is kept unchanged at [a59490/Tese_ASD_Gene_Pred](https://github.com/a59490/Tese_ASD_Gene_Pred).
+| | |
+|---|---|
+| **What** | Rank ~19,000 human genes by autism risk, using SFARI Gene as ground truth |
+| **How** | Protein language-model embeddings (ProtT5); DNA (DNABERT-2) and protein-interaction graph embeddings from the thesis; classical classifiers with nested cross-validation |
+| **Result** | ROC-AUC **0.91** on held-out high-confidence genes. **55%** of the genes SFARI added two years later were already in the model's top 10% |
+| **Why it matters** | Narrows thousands of genes to a short list of candidates for follow-up studies, the same ranking problem as target prioritisation |
+| **Run it** | [`notebooks/demo.ipynb`](notebooks/demo.ipynb) on a laptop, no GPU, or `pip install -e .` then `asd --help` |
 
-**Try it:** [`notebooks/demo.ipynb`](notebooks/demo.ipynb) runs the main analysis end to end on a laptop in a few minutes, without a GPU.
+## Results
 
-## Key results
+<table>
+  <tr>
+    <td width="50%"><img src="reports/figures/readme_roc_pr.png" alt="ROC and precision-recall curves: AUC 0.91 and AUPRC 0.75 on probabilities, against the single 0/1 point used in the thesis (AUC 0.83)"></td>
+    <td width="50%"><img src="reports/figures/readme_models.png" alt="ROC-AUC per model, thesis versus this repository: Logistic Regression 0.91, SVM 0.90, KNN 0.90, Naive Bayes 0.84"></td>
+  </tr>
+  <tr>
+    <td><b>Corrected evaluation.</b> The thesis computed ROC-AUC on 0/1 predictions, which keeps one point of the curve. On probabilities, ROC-AUC is 0.91 instead of 0.83.</td>
+    <td><b>Model comparison.</b> The new pipeline reproduces the thesis values, then corrects them. Linear models, SVM and KNN perform alike; the signal is in the embeddings.</td>
+  </tr>
+  <tr>
+    <td><img src="reports/figures/readme_topk.png" alt="Share of genes added to SFARI after 2024 found in the top 1, 5 and 10 percent: protein ranking 15, 39 and 55 percent, against 1, 5 and 10 percent by chance"></td>
+    <td><img src="reports/figures/readme_baseline.png" alt="Temporal-validation AUC: protein 0.84, graph 0.80, protein length 0.79; among genes of similar length: 0.80, 0.76 and 0.65"></td>
+  </tr>
+  <tr>
+    <td><b>Temporal validation.</b> Trained on SFARI as of January 2024; 15% of the genes added by July 2026 were in the top 1% of ~16,000 unlabelled genes (15× random).</td>
+    <td><b>Beyond gene length.</b> Long genes are discovered more often. The protein ranking still beats a length-only baseline (+0.05 AUC, 95% CI 0.01 to 0.10).</td>
+  </tr>
+</table>
 
-**1. Corrected evaluation: ROC-AUC 0.83 → 0.91.** The thesis computed ROC-AUC on hard 0/1 predictions, which keeps a single point of the ROC curve. Re-running the same data through the new pipeline reproduces the published numbers almost exactly. Computing the metrics on predicted probabilities instead:
+Seven of the top 50 candidates in the thesis ranking were later added to SFARI: CHD4, BPTF, DOP1A, DOT1L, FRYL, RALGAPA1 and ZNF532.
 
-| ProtT5 + Logistic Regression, test on SFARI category 1 genes | Thesis | This repo |
-|---|---:|---:|
-| ROC-AUC | 0.83 | **0.91** |
-| Average precision (random = 0.23) | 0.53 | **0.77** |
+Full reports: [reproduction of the thesis results](reports/prott5_reproduction.md) · [temporal validation](reports/temporal_validation.md) · [changes from the thesis code](docs/changes_from_thesis.md)
 
-**2. Temporal validation: the ranking anticipated genes SFARI added two years later.** The model was trained on the January 2024 SFARI release. Of the 127 genes SFARI added by July 2026, **55% were already in the top 10%** of ~16,000 unlabelled genes (random: 10%, p < 10⁻³⁰). Seven of the top 50 candidates were later added to SFARI (CHD4, BPTF, DOP1A, DOT1L, FRYL, RALGAPA1, ZNF532).
-
-**3. Beyond gene size.** Long genes are discovered more often, and ranking by protein length alone already gives AUC 0.79. The protein-embedding ranking beats it: +0.05 AUC (95% CI 0.01–0.10), and keeps AUC 0.80 among genes of similar length.
-
-<p>
-  <img src="reports/figures/roc_thesis_vs_corrected.png" alt="ROC curve, AUC 0.91, versus the single-point AUC of 0.83 reported in the thesis" width="40%">
-  <img src="reports/figures/temporal_validation_en.png" alt="Share of new SFARI genes found in the top 1, 5 and 10 percent of each ranking" width="56%">
-</p>
-
-Detailed reports: [reproduction of the thesis results](reports/prott5_reproduction.md) · [temporal validation](reports/temporal_validation.md) · [changes from the thesis code](docs/changes_from_thesis.md).
-
-## Approach
+## Pipeline
 
 ```mermaid
 flowchart LR
-    A[SFARI Gene<br/>positives] --> L[Labels]
-    B[Krishnan et al. 2016<br/>negatives] --> L
-    P[Protein sequences] --> E1[ProtT5]
-    D[DNA sequences] --> E2[DNABERT-2]
-    S[STRING network] --> E3[Graph embeddings]
-    L --> M[Nested cross-validation<br/>LR, SVM, KNN, GBMs]
-    E1 --> M
-    E2 --> M
-    E3 --> M
+    subgraph Data
+        S[SFARI Gene<br/>positives]
+        K[Krishnan et al. 2016<br/>negatives]
+        G[Sequences, STRING,<br/>HGNC / MANE]
+    end
+    S --> P[Preprocessing<br/>labels, gene ID map]
+    K --> P
+    G --> P
+    P --> E[Embeddings<br/>ProtT5 · DNABERT-2 · graph]
+    E --> F[Feature sets<br/>per source, per label set]
+    F --> CV[Nested cross-validation<br/>LR · SVM · KNN · GBMs]
+    CV --> M[Selected model]
     M --> R[Genome-wide ranking]
-    R --> V[Validation:<br/>temporal, baselines]
+    R --> V[Temporal validation<br/>vs newer SFARI + baselines]
 ```
 
-- **Labels.** Positives are SFARI Gene genes. Several sets were compared (category 1 only, up to category 3, with or without syndromic genes). Negatives are the genes listed by Krishnan et al. (2016) that are not in SFARI.
-- **Evaluation.** Stratified 5-fold cross-validation defined on the highest-confidence genes (category 1). Every model is tested on the same genes, and larger positive sets only add training data. Hyperparameters are tuned inside each training fold, so no information leaks into the test fold.
-- **Metrics.** ROC-AUC and average precision on probabilities, precision among the top-k genes, and MCC. The thesis-style values are kept for comparison.
-- **Temporal validation.** Rankings built with an older SFARI release are scored against the genes SFARI added later, and compared with simple baselines on the same genes.
+- **Labels.** Positives are SFARI Gene genes; several sets are compared (category 1 only, up to category 3, with or without syndromic genes). Negatives are the Krishnan et al. (2016) genes not in SFARI.
+- **Evaluation.** Stratified 5-fold cross-validation on the highest-confidence genes (category 1). Every model is tested on the same genes, and larger positive sets only add training data. Hyperparameters are tuned inside each training fold.
+- **Metrics.** ROC-AUC and average precision on probabilities, precision among the top-k genes, and MCC.
+- **Temporal validation.** A ranking built with an older SFARI release is scored against the genes SFARI added later, and compared with baselines on the same genes.
 
-## Data
+## Engineering highlights
 
-| Source | Use | Version |
-|---|---|---|
-| [SFARI Gene](https://gene.sfari.org/) | positive genes | releases of 2024-01-16 and 2026-07-12 |
-| Krishnan et al., *Nat Neurosci* 2016 | negative genes | — |
-| [STRING](https://string-db.org/) | protein-interaction graph | v12.0 in the new pipeline |
-| HGNC, MANE | gene identifier map | current / v1.4 |
-| ProtT5 embeddings | protein features | computed in the thesis |
-
-Every source is declared in [`configs/sources.yaml`](configs/sources.yaml). `asd fetch` downloads it and checks its SHA-256 against [`configs/sources.lock.yaml`](configs/sources.lock.yaml), so a silently changed upstream file is detected instead of used. Data files never go into Git.
+| | |
+|---|---|
+| **Reproducible ML pipeline** | Same inputs, same outputs: pinned data versions, fixed seeds, results written to Parquet |
+| **CLI** | One entry point (`asd fetch`, `labels`, `embed`, `train`, `validate-temporal`) replacing three duplicated scripts and ad-hoc notebooks |
+| **Configuration-driven experiments** | Label sets, CV settings and models defined in [`configs/default.yaml`](configs/default.yaml), not in code |
+| **Data versioning and checksums** | Every input declared in [`configs/sources.yaml`](configs/sources.yaml); SHA-256 locked in [`sources.lock.yaml`](configs/sources.lock.yaml), so a changed upstream file fails loudly |
+| **Nested cross-validation** | Hyperparameter search inside each training fold, scaling inside the pipeline: no leakage into test folds |
+| **Model registry** | Classifiers and their search grids in one place ([`models/registry.py`](src/asd_gene_predict/models/registry.py)) |
+| **Temporal validation** | Prospective check against a newer SFARI release, with bootstrap confidence intervals and a gene-length baseline |
+| **Unit tests on offline fixtures** | 45 tests on small synthetic and sampled data; no network needed |
+| **CI** | Lint (ruff) and tests on every pull request with GitHub Actions |
+| **Documented fixes** | Issues found in the original code, and how each was fixed: [`docs/changes_from_thesis.md`](docs/changes_from_thesis.md) |
 
 ## Quickstart
 
@@ -77,24 +92,26 @@ asd embed protein --legacy                            # load the thesis ProtT5 e
 asd train --features protein_prott5 --model lr --set cat_1
 ```
 
-`asd --help` lists every command. Temporal validation also needs the current SFARI "Human Gene" CSV, downloaded by hand from [gene.sfari.org/tools](https://gene.sfari.org/tools/) (SFARI terms of use), followed by `asd validate-temporal`.
+Temporal validation also needs the current SFARI "Human Gene" CSV, downloaded by hand from [gene.sfari.org/tools](https://gene.sfari.org/tools/) (SFARI terms of use), followed by `asd validate-temporal`. The README figures are rebuilt with `python scripts/readme_figures.py`.
 
-## Engineering
+## Data
 
-- One command-line pipeline (`asd`) replacing three near-identical training scripts and several notebooks.
-- Versioned, checksummed inputs; parameters in YAML; fixed random seeds.
-- Embeddings and tables stored as Parquet, not as vectors serialised into CSV text.
-- Tests on small fixtures that run offline, plus lint (ruff) on every pull request through GitHub Actions.
-- Issues found in the original code, and how each was fixed, are listed in [`docs/changes_from_thesis.md`](docs/changes_from_thesis.md). They include the AUC computation and an XGBoost class-weight parameter that was silently ignored.
+| Source | Use | Version |
+|---|---|---|
+| [SFARI Gene](https://gene.sfari.org/) | positive genes | releases of 2024-01-16 and 2026-07-12 |
+| Krishnan et al., *Nat Neurosci* 2016 | negative genes | — |
+| [STRING](https://string-db.org/) | protein-interaction graph | v12.0 in the new pipeline |
+| HGNC, MANE | gene identifier map | current / v1.4 |
+| ProtT5 embeddings | protein features | computed in the thesis |
 
 ## Repository layout
 
 ```
 configs/      pipeline parameters, data sources and checksums
-notebooks/    end-to-end demo
 docs/         changes from the thesis code, project plan
+notebooks/    end-to-end demo
 reports/      result reports and figures
-scripts/      report generation
+scripts/      report and figure generation
 src/asd_gene_predict/
   data/         sources, gene identifier map, labels
   embeddings/   embedding storage and import
@@ -108,6 +125,13 @@ tests/
 - Add gene-constraint (gnomAD LOEUF) and network-degree baselines.
 - Regenerate DNA and graph embeddings with the new pipeline and compare all sources with correct metrics.
 - Publish a genome-wide ranking with a small web app to look up any gene.
+
+## Related repositories
+
+- **Portfolio version (this repository):** [joao-ps-inacio/Asd_gene_predict](https://github.com/joao-ps-inacio/Asd_gene_predict)
+- **Original thesis implementation:** [Tese_ASD_Gene_Pred](https://github.com/a59490/Tese_ASD_Gene_Pred), kept unchanged
+
+The thesis: *Predicting Autism Risk Genes Using Graph and Sequence Embeddings*, MSc in Bioinformatics and Computational Biology, Faculdade de Ciências da Universidade de Lisboa / Instituto Nacional de Saúde Doutor Ricardo Jorge, 2025.
 
 ## Disclaimer
 
