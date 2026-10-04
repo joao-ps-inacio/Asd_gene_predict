@@ -1,8 +1,14 @@
 """Import of the embeddings computed during the thesis.
 
-The thesis stored each vector as a string inside a CSV cell (``"[0.1, -0.2, ...]"``), with
-columns ``0`` symbol, ``1`` Ensembl gene, ``2`` Ensembl protein, ``3`` vector, ``4`` label.
-This module parses that format once into the Parquet layout of :mod:`embeddings.io`.
+Two layouts exist in the thesis repository:
+
+- sequence embeddings (ProtT5): each vector stored as a string inside a CSV cell
+  (``"[0.1, -0.2, ...]"``), with columns ``0`` symbol, ``1`` Ensembl gene, ``2`` Ensembl
+  protein, ``3`` vector, ``4`` label;
+- graph embeddings (DeepWalk): one numeric column per dimension (``0`` … ``499``) plus
+  ``ensb_gene_id``.
+
+This module parses them once into the Parquet layout of :mod:`embeddings.io`.
 """
 
 from __future__ import annotations
@@ -21,6 +27,11 @@ LEGACY_META = {
         "sequence": "Ensembl canonical protein",
         "origin": "a59490/Tese_ASD_Gene_Pred@c3e7610 (03_ML/sequence/Protein)",
     },
+    "deepwalk": {
+        "model": "DeepWalk (GRAPE) on the STRING protein-interaction network",
+        "dimensions": 500,
+        "origin": "a59490/Tese_ASD_Gene_Pred@c3e7610 (04_Validation/01_Ranked_list/graph)",
+    },
 }
 
 
@@ -34,4 +45,16 @@ def read_legacy(path: Path) -> pd.DataFrame:
     if np.isnan(vectors).any():
         raise ValueError(f"{path}: vetores com NaN")
     frame = to_frame(df["1"].str.strip(), vectors)
+    return frame.drop_duplicates("ensembl_gene_id").reset_index(drop=True)
+
+
+def read_legacy_graph(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    dims = sorted((c for c in df.columns if c.isdigit()), key=int)
+    if not dims:
+        raise ValueError(f"{path}: sem colunas de dimensões numéricas")
+    vectors = df[dims].to_numpy(dtype=np.float32)
+    if np.isnan(vectors).any():
+        raise ValueError(f"{path}: vetores com NaN")
+    frame = to_frame(df["ensb_gene_id"].astype(str).str.strip(), vectors)
     return frame.drop_duplicates("ensembl_gene_id").reset_index(drop=True)
