@@ -113,14 +113,14 @@ def labels() -> None:
 
 @app.command()
 def embed(
-    kind: Annotated[str, typer.Argument(help="dna | protein | graph")],
+    kind: Annotated[str, typer.Argument(help="protein | graph")],
     legacy: Annotated[
         bool, typer.Option("--legacy", help="Importar os embeddings calculados na tese.")
     ] = False,
 ) -> None:
-    """Etapa 2: gerar embeddings (DNABERT-2, ProtT5 ou GRAPE)."""
+    """Etapa 2: importar os embeddings da tese (ProtT5 ou DeepWalk)."""
     if not legacy:
-        raise NotImplementedError("Só `--legacy` está implementado por agora (ver docs/PLANO.md).")
+        raise typer.BadParameter("only --legacy is supported: the thesis embeddings are imported.")
     from asd_gene_predict.data.sources import load_sources
     from asd_gene_predict.embeddings.io import embedding_path, save_embeddings
     from asd_gene_predict.embeddings.legacy import LEGACY_META, read_legacy, read_legacy_graph
@@ -357,12 +357,6 @@ def validate_temporal(
     typer.echo(f"{len(added)} genes novos no SFARI.")
     typer.echo(table[cols].astype(float).round(3).to_string())
     typer.echo(f"Guardado em {out_dir / 'temporal_validation.csv'}")
-
-
-@app.command()
-def rank() -> None:
-    """Etapa 4: gerar a lista ordenada de genes candidatos."""
-    raise NotImplementedError("Por implementar — ver CLAUDE.md, Roadmap.")
 
 
 if __name__ == "__main__":

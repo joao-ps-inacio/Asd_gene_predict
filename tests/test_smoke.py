@@ -19,6 +19,6 @@ def test_cli_commands_registered():
 
     runner = CliRunner()
     out = runner.invoke(app, ["--help"]).output
-    for cmd in ("fetch", "gene-map", "labels", "embed", "train", "rank"):
+    for cmd in ("fetch", "gene-map", "labels", "embed", "train", "compare", "validate-temporal"):
         assert cmd in out
     assert runner.invoke(app, ["fetch", "nao-existe"]).exit_code == 2

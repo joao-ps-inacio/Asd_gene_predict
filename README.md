@@ -127,11 +127,13 @@ src/asd_gene_predict/
 tests/
 ```
 
-## Roadmap
+## Future work
 
-- Add gene-constraint (gnomAD LOEUF) and network-degree baselines.
-- Regenerate DNA and graph embeddings with the new pipeline and compare all sources with correct metrics.
-- Publish a genome-wide ranking with a small web app to look up any gene.
+The project is complete as a portfolio piece. Natural extensions:
+
+- gene-constraint (gnomAD LOEUF) and network-degree baselines, to test how much of the graph signal reflects how well studied a gene is;
+- new DNA and graph embeddings computed with this pipeline;
+- a genome-wide ranking with a small web app to look up any gene.
 
 ## Related repositories
 
