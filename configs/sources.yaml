@@ -65,6 +65,15 @@ sources:
     version: thesis-2025
     stage: embeddings
 
+  # Embeddings de grafo (DeepWalk sobre o STRING) usados no ranking de grafo da tese:
+  # 500 dimensões, genes de treino (positivos e negativos).
+  legacy_graph_deepwalk:
+    description: Embeddings DeepWalk da tese (04_Validation/01_Ranked_list/graph/complete.csv.gz)
+    url: https://raw.githubusercontent.com/a59490/Tese_ASD_Gene_Pred/c3e7610062a569e498f9c05d78609d90a8679a9e/04_Validation/01_Ranked_list/graph/complete.csv.gz
+    filename: legacy_graph_deepwalk_complete.csv.gz
+    version: thesis-2025
+    stage: embeddings
+
   # --- Validação temporal -----------------------------------------------------------------
   # Release recente do SFARI, para ver se os genes acrescentados depois de jan/2024 já
   # estavam no topo dos rankings da tese.

@@ -121,19 +121,23 @@ def embed(
     """Etapa 2: gerar embeddings (DNABERT-2, ProtT5 ou GRAPE)."""
     if not legacy:
         raise NotImplementedError("Só `--legacy` está implementado por agora (ver docs/PLANO.md).")
-    if kind != "protein":
-        raise typer.BadParameter("Com --legacy, só `protein` (ProtT5) está disponível.")
-
     from asd_gene_predict.data.sources import load_sources
     from asd_gene_predict.embeddings.io import embedding_path, save_embeddings
-    from asd_gene_predict.embeddings.legacy import LEGACY_META, read_legacy
+    from asd_gene_predict.embeddings.legacy import LEGACY_META, read_legacy, read_legacy_graph
 
-    src = load_sources()["legacy_prott5"].path()
+    legacy_sets = {
+        "protein": ("legacy_prott5", read_legacy, "protein_prott5", "prott5"),
+        "graph": ("legacy_graph_deepwalk", read_legacy_graph, "graph_deepwalk", "deepwalk"),
+    }
+    if kind not in legacy_sets:
+        raise typer.BadParameter("Com --legacy, só `protein` (ProtT5) e `graph` (DeepWalk).")
+    source, reader, name, meta = legacy_sets[kind]
+    src = load_sources()[source].path()
     if not src.exists():
-        typer.echo("Falta o ficheiro. Correr `asd fetch legacy_prott5`.", err=True)
+        typer.echo(f"Falta o ficheiro. Correr `asd fetch {source}`.", err=True)
         raise typer.Exit(1)
-    df = read_legacy(src)
-    out = save_embeddings(df, embedding_path("protein_prott5"), LEGACY_META["prott5"])
+    df = reader(src)
+    out = save_embeddings(df, embedding_path(name), LEGACY_META[meta])
     typer.echo(f"{len(df)} genes × {df.shape[1] - 1} dimensões → {out}")
 
 
@@ -190,6 +194,79 @@ def train(
     metrics = ["average_precision", "roc_auc", "precision_at_k", "mcc"]
     typer.echo(ev.format_table(results, metrics).to_string())
     typer.echo(f"Guardado em {out}")
+
+
+@app.command()
+def compare(
+    features: Annotated[
+        list[str], typer.Option(help="Embeddings a comparar (repetível), ex.: protein_prott5.")
+    ],
+    model: Annotated[
+        list[str], typer.Option(help="lr | svm | rf | knn | lgbm | xgb | nb (repetível).")
+    ] = ["lr"],  # noqa: B006
+    fusion: Annotated[
+        bool, typer.Option(help="Juntar também todas as fontes numa só (concatenação).")
+    ] = True,
+    repeats: Annotated[int, typer.Option(help="Repetições da CV de 5 folds.")] = 5,
+    cross_category: Annotated[
+        bool,
+        typer.Option(help="Também treinar na categoria 1 e testar nas categorias 2/3 (só LR)."),
+    ] = False,
+) -> None:
+    """Comparação justa entre fontes: mesmos genes, mesmos folds, mesmos modelos."""
+    from asd_gene_predict.config import load_config
+    from asd_gene_predict.data.labels import load_labels, positive_sets
+    from asd_gene_predict.embeddings.io import embedding_path, load_embeddings
+    from asd_gene_predict.models import compare as cmp
+    from asd_gene_predict.models.registry import resolve
+    from asd_gene_predict.paths import REPORTS
+
+    cfg = load_config()
+    cv = cfg["cv"]
+    try:
+        models = resolve(model)
+    except KeyError as e:
+        raise typer.BadParameter(str(e.args[0])) from e
+    sets = cmp.feature_sets({f: load_embeddings(embedding_path(f)) for f in features}, fusion)
+    test_set = {s.name: s for s in positive_sets(cfg)}[cv["test_set"]]
+    results = cmp.compare_sources(
+        sets,
+        load_labels(),
+        test_set,
+        models,
+        test_set=cv["test_set"],
+        n_splits=cv["n_splits"],
+        n_repeats=repeats,
+        inner_splits=cv.get("inner_splits", 5),
+        scoring=cv["scoring"],
+        seed=cfg["seed"],
+    )
+    out = REPORTS / "results" / f"comparison__{'-'.join(features)}__{'-'.join(models)}.parquet"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    results.to_parquet(out, index=False)
+    summary = results.groupby(["features", "model"])[["roc_auc", "average_precision"]].agg(
+        ["mean", "std"]
+    )
+    typer.echo(summary.round(3).to_string())
+    names = list(sets)
+    for i, a in enumerate(names):
+        for b in names[i + 1 :]:
+            typer.echo(cmp.paired_comparison(results, a, b).round(4).to_string(index=False))
+    typer.echo(f"Guardado em {out}")
+    if cross_category:
+        gen = cmp.cross_category(
+            sets,
+            load_labels(),
+            "lr",
+            n_repeats=repeats,
+            inner_splits=cv.get("inner_splits", 5),
+            scoring=cv["scoring"],
+            seed=cfg["seed"],
+        )
+        gen_out = REPORTS / "results" / "generalization_cat23_lr.parquet"
+        gen.to_parquet(gen_out, index=False)
+        typer.echo(gen.groupby("features")[["roc_auc", "average_precision"]].mean().round(3))
+        typer.echo(f"Guardado em {gen_out}")
 
 
 @app.command("validate-temporal")

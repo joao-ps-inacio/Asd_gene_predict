@@ -36,7 +36,11 @@ Machine-learning pipeline that ranks human genes by their likelihood of being au
 
 Seven of the top 50 candidates in the thesis ranking were later added to SFARI: CHD4, BPTF, DOP1A, DOT1L, FRYL, RALGAPA1 and ZNF532.
 
-Full reports: [reproduction of the thesis results](reports/prott5_reproduction.md) · [temporal validation](reports/temporal_validation.md) · [changes from the thesis code](docs/changes_from_thesis.md)
+**Protein vs graph embeddings.** Compared on the same genes, folds and models, graph embeddings recover known SFARI genes better (ROC-AUC 0.96 vs 0.91, paired corrected t-test p < 0.001). On genes discovered after 2024 the order reverses: the protein ranking does at least as well, and only it beats the gene-length baseline. Graph embeddings appear to capture how well a gene is already characterised in the interaction network. [Full comparison](reports/embedding_comparison.md).
+
+<img src="reports/figures/embedding_comparison.png" alt="Left: cross-validated ROC-AUC per model, graph about 0.96 and protein about 0.90. Right: protein falls from 0.91 to 0.71 on category 2/3 genes and rises to 0.84 on genes added after 2024, while graph goes from 0.96 to 0.86 to 0.80." width="100%">
+
+Full reports: [reproduction of the thesis results](reports/prott5_reproduction.md) · [temporal validation](reports/temporal_validation.md) · [protein vs graph](reports/embedding_comparison.md) · [changes from the thesis code](docs/changes_from_thesis.md)
 
 ## Pipeline
 
@@ -73,8 +77,9 @@ flowchart LR
 | **Data versioning and checksums** | Every input declared in [`configs/sources.yaml`](configs/sources.yaml); SHA-256 locked in [`sources.lock.yaml`](configs/sources.lock.yaml), so a changed upstream file fails loudly |
 | **Nested cross-validation** | Hyperparameter search inside each training fold, scaling inside the pipeline: no leakage into test folds |
 | **Model registry** | Classifiers and their search grids in one place ([`models/registry.py`](src/asd_gene_predict/models/registry.py)) |
+| **Fair model comparison** | Sources compared on identical genes and folds, with a paired corrected resampled t-test (Nadeau & Bengio) for repeated cross-validation |
 | **Temporal validation** | Prospective check against a newer SFARI release, with bootstrap confidence intervals and a gene-length baseline |
-| **Unit tests on offline fixtures** | 45 tests on small synthetic and sampled data; no network needed |
+| **Unit tests on offline fixtures** | 49 tests on small synthetic and sampled data; no network needed |
 | **CI** | Lint (ruff) and tests on every pull request with GitHub Actions |
 | **Documented fixes** | Issues found in the original code, and how each was fixed: [`docs/changes_from_thesis.md`](docs/changes_from_thesis.md) |
 
@@ -89,7 +94,9 @@ pip install -e ".[dev]"
 asd fetch --stage labels && asd fetch legacy_prott5   # download and verify inputs
 asd labels                                            # build positive/negative labels
 asd embed protein --legacy                            # load the thesis ProtT5 embeddings
+asd embed graph --legacy                              # and the thesis graph embeddings
 asd train --features protein_prott5 --model lr --set cat_1
+asd compare --features protein_prott5 --features graph_deepwalk --model lr
 ```
 
 Temporal validation also needs the current SFARI "Human Gene" CSV, downloaded by hand from [gene.sfari.org/tools](https://gene.sfari.org/tools/) (SFARI terms of use), followed by `asd validate-temporal`. The README figures are rebuilt with `python scripts/readme_figures.py`.

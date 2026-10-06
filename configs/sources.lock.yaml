@@ -4,6 +4,11 @@ krishnan_2016:
   locked_at: '2026-09-30'
   sha256: 31db081d280a74cb1b9b5d01c1c18ecb05a1f0010b40bb9d2caf95dbeb9e0339
   version: '2016'
+legacy_graph_deepwalk:
+  filename: legacy_graph_deepwalk_complete.csv.gz
+  locked_at: '2026-10-04'
+  sha256: 15881f1103eac89ada9f15530554fd4fcb745ebfd937317e1d198aa98cd11d48
+  version: thesis-2025
 legacy_peptides:
   filename: legacy_peptide_seq.csv
   locked_at: '2026-10-01'
