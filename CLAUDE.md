@@ -67,7 +67,9 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 
 ## Estado atual
 
-**2026-10-04**
+**2026-10-06 — projeto fechado**
+- O João decidiu dar o projeto por terminado (é para o CV, não para publicar). O último PR tirou o stub `asd rank`, limitou `asd embed` ao `--legacy` e trocou o Roadmap do README por "Future work". Os itens por fazer do Roadmap acima ficam como trabalho futuro opcional.
+- Falta só o João: About e topics no GitHub, fixar o repo no perfil, importar o repo da tese para a conta nova (e depois trocar o link em "Related repositories").
 - Tudo em `main` (PR #8 levou para `main` o trabalho dos PRs empilhados #4–#7). Não voltar a empilhar PRs: abrir sempre contra `main`.
 - Reprodução: a pipeline reproduz a tese (AUC da LR à maneira da tese 0,830 vs. 0,829). Corrigido: AUC ~0,91, AUPRC ~0,76.
 - Validação temporal: dos genes acrescentados ao SFARI entre jan/2024 e jul/2026, 55% estavam no top 10% do ranking de proteína da tese (AUC 0,84). O comprimento da proteína sozinho dá AUC 0,79; a proteína ganha-lhe (+0,05, IC95 [0,01; 0,10]). O grafo não ganha de forma significativa.
@@ -75,7 +77,7 @@ Plano detalhado, com fases e ordem dos PRs: [`docs/PLANO.md`](docs/PLANO.md).
 - Página com os resultados (privada, partilhável pelo João): https://claude.ai/artifact/JLJaWvVfvq8tW3GuSctM5Y
 - README em inglês pensado para recrutadores: resumo "What / How / Result / Why / Run", grelha de 4 figuras (geradas por `scripts/readme_figures.py`), tabela de engenharia. `notebooks/demo.ipynb` executado. Quando o João importar o repo da tese para a conta nova (`joao-ps-inacio/Tese_ASD_Gene_Pred`), trocar o link em "Related repositories".
 - Comparação justa proteína vs grafo (`asd compare`, [`reports/embedding_comparison.md`](reports/embedding_comparison.md)): mesmos 1915 genes, mesmos folds 5×5, LR/SVM/KNN, teste t corrigido de Nadeau-Bengio. Nos genes conhecidos o grafo ganha (AUC 0,96 vs 0,91, p < 0,001); de cat. 1 para cat. 2/3 também (0,86 vs 0,71). Na validação temporal a proteína fica à frente (0,84 vs 0,80, rankings da tese com classificadores diferentes). Hipótese: o grafo capta o quão estudado o gene já está; testar com baseline de grau no STRING.
-- Próximo: baseline de grau STRING e LOEUF (precisam do PC do João) (o gnomAD não é acessível a partir da sessão cloud), CV repetida, refazer o ranking com a pipeline nova.
+- Se o projeto for retomado: baseline de grau STRING e LOEUF (precisam do PC do João; o gnomAD não é acessível a partir da sessão cloud), refazer o ranking com a pipeline nova, app.
 
 Para abrir PRs a partir da sessão: API do GitHub via `curl` (o proxy da sessão trata da autenticação), com o header `Content-Type: application/json`.
 
