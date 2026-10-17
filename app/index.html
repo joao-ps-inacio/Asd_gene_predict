@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ASD Gene Predict</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Genome-wide ranking of autism risk gene candidates from an MSc thesis, with gene function and the genes SFARI added after the model was trained.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <div class="title-row">
+      <h1>ASD Gene Predict</h1>
+      <a class="repo" href="https://github.com/joao-ps-inacio/Asd_gene_predict">Code and reports</a>
+    </div>
+    <p class="lede">Every human gene ranked by how likely it is to be an autism risk gene, by two models from my MSc thesis trained on <abbr title="Simons Foundation Autism Research Initiative gene database">SFARI Gene</abbr> as of January 2024. Genes SFARI added since then are marked, so you can see which predictions held up.</p>
+    <dl class="facts" id="facts" aria-live="polite">
+      <div><dt>Genes ranked</dt><dd id="fact-genes">–</dd></div>
+      <div><dt>New SFARI genes in the protein model's top 10%</dt><dd id="fact-top10">–</dd></div>
+      <div><dt>Expected by chance</dt><dd>10%</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="controls" aria-label="Find genes">
+    <label class="search">
+      <span class="visually-hidden">Search genes</span>
+      <input id="q" type="search" placeholder="Search a gene: CHD8, SHANK3, ENSG00000100888, chromatin…" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="filters" role="radiogroup" aria-label="Which genes">
+      <button type="button" role="radio" data-view="candidates" aria-checked="true">Candidates<span class="count" data-count="candidates"></span></button>
+      <button type="button" role="radio" data-view="new" aria-checked="false">Added since 2024<span class="count" data-count="new"></span></button>
+      <button type="button" role="radio" data-view="known" aria-checked="false">Known in 2024<span class="count" data-count="known"></span></button>
+      <button type="button" role="radio" data-view="all" aria-checked="false">All<span class="count" data-count="all"></span></button>
+    </div>
+    <label class="sort">
+      <span>Sort by</span>
+      <select id="sort">
+        <option value="protein">Protein model</option>
+        <option value="graph">Network model</option>
+        <option value="mean">Both (average)</option>
+        <option value="symbol">Symbol A–Z</option>
+      </select>
+    </label>
+  </section>
+  <p class="view-note" id="view-note"></p>
+
+  <div class="layout">
+    <section class="list-pane" aria-label="Ranked genes">
+      <div class="list-head" aria-hidden="true">
+        <span>#</span><span>Gene</span><span class="tracks-head"><span>Protein</span><span>Network</span></span><span>SFARI</span>
+      </div>
+      <ol class="list" id="list"></ol>
+      <button type="button" class="more" id="more" hidden>Show more</button>
+      <p class="empty" id="empty" hidden>No gene matches that search in this view. Try <button type="button" class="link" id="search-all">searching all genes</button>.</p>
+    </section>
+
+    <aside class="detail" id="detail" aria-label="Gene details" tabindex="-1">
+      <p class="loading">Loading the rankings…</p>
+    </aside>
+  </div>
+
+  <section class="about" id="about" aria-labelledby="about-title">
+    <h2 id="about-title">How the ranking was made</h2>
+    <div class="about-grid">
+      <div class="prose">
+        <p>Two classifiers from the thesis score each gene. Both learned from the same labels: SFARI Gene as of January 2024 (category 1 and syndromic genes as positives) and the low-risk genes of Krishnan et al. (2016) as negatives.</p>
+        <ul>
+          <li><strong>Protein model.</strong> The gene's canonical protein sequence, embedded with the ProtT5 protein language model, then XGBoost.</li>
+          <li><strong>Network model.</strong> The gene's position in the STRING protein-interaction network, embedded with DeepWalk, then logistic regression.</li>
+        </ul>
+        <p>Training genes were scored by cross-validation, so their scores come from a model that never saw them. All other genes were scored by a model trained on every labelled gene.</p>
+        <p><strong>Did it work?</strong> <span id="validation-text">SFARI has added genes since the models were trained.</span> The chart shows where those genes sat among the genes that had no label in 2024.</p>
+        <p><strong>Read with care.</strong> This is a research ranking, not a diagnostic tool. Long genes collect more rare variants and get discovered more often, which explains part of the result. Most added genes are SFARI category 3, the weakest evidence level. Network embeddings partly reflect how well studied a gene already is.</p>
+        <p>Full analysis: <a href="https://github.com/joao-ps-inacio/Asd_gene_predict/blob/main/reports/temporal_validation.md">temporal validation</a> · <a href="https://github.com/joao-ps-inacio/Asd_gene_predict/blob/main/reports/embedding_comparison.md">protein vs network</a> · <a href="https://github.com/joao-ps-inacio/Asd_gene_predict/blob/main/docs/changes_from_thesis.md">changes from the thesis code</a></p>
+      </div>
+      <figure class="chart">
+        <div class="chart-tabs" role="radiogroup" aria-label="Model">
+          <button type="button" role="radio" data-chart="protein" aria-checked="true">Protein model</button>
+          <button type="button" role="radio" data-chart="graph" aria-checked="false">Network model</button>
+        </div>
+        <div id="chart"></div>
+        <figcaption id="chart-caption"></figcaption>
+      </figure>
+    </div>
+    <h3>Data</h3>
+    <ul class="sources" id="sources"></ul>
+  </section>
+</main>
+
+<footer class="wrap footer">
+  <p>João Inácio · MSc thesis <cite>Predicting Autism Risk Genes Using Graph and Sequence Embeddings</cite>, Faculdade de Ciências da Universidade de Lisboa / Instituto Nacional de Saúde Doutor Ricardo Jorge, 2025.</p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

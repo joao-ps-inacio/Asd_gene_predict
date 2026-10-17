@@ -1,0 +1,77 @@
+{
+  "generated": "2026-10-17",
+  "n_genes": 18939,
+  "n_protein": 18933,
+  "n_graph": 18098,
+  "roles": {
+    "none": 16984,
+    "sfari_2024": 790,
+    "train_neg": 745,
+    "train_pos": 307,
+    "new": 113
+  },
+  "added_total": 127,
+  "validation": {
+    "protein": {
+      "n_pool": 16274,
+      "n_new": 108,
+      "top1": 0.1481,
+      "top5": 0.3889,
+      "top10": 0.5463
+    },
+    "graph": {
+      "n_pool": 16274,
+      "n_new": 108,
+      "top1": 0.1204,
+      "top5": 0.3889,
+      "top10": 0.4907
+    }
+  },
+  "sources": {
+    "legacy_rank_protein": {
+      "label": "Thesis ranking: protein embeddings (ProtT5) + XGBoost",
+      "url": "https://github.com/a59490/Tese_ASD_Gene_Pred",
+      "version": "thesis-2025"
+    },
+    "legacy_rank_graph": {
+      "label": "Thesis ranking: STRING network embeddings (DeepWalk) + logistic regression",
+      "url": "https://github.com/a59490/Tese_ASD_Gene_Pred",
+      "version": "thesis-2025"
+    },
+    "sfari": {
+      "label": "SFARI Gene, release used for training",
+      "url": "https://gene.sfari.org/",
+      "version": "2024-01-16"
+    },
+    "krishnan_2016": {
+      "label": "Krishnan et al. (2016), Nature Neuroscience: negative genes",
+      "url": "https://doi.org/10.1038/nn.4353",
+      "version": "2016"
+    },
+    "sfari_2026q2": {
+      "label": "SFARI Gene, release used for validation",
+      "url": "https://gene.sfari.org/",
+      "version": "2026-07-12"
+    },
+    "legacy_peptides": {
+      "label": "Protein sequences used in the thesis",
+      "url": "https://github.com/a59490/Tese_ASD_Gene_Pred",
+      "version": "thesis-2025"
+    },
+    "hgnc": {
+      "label": "HGNC gene symbols, names and groups",
+      "url": "https://www.genenames.org/",
+      "version": "2026-10-17"
+    },
+    "uniprot_human": {
+      "label": "UniProtKB/Swiss-Prot function, disease involvement and keywords",
+      "url": "https://www.uniprot.org/",
+      "version": "2026_03"
+    },
+    "gnomad_constraint": {
+      "label": "gnomAD constraint metrics (LOEUF)",
+      "url": "https://gnomad.broadinstitute.org/",
+      "version": "4.1"
+    }
+  }
+}
