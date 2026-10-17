@@ -11,7 +11,16 @@ Machine-learning pipeline that ranks human genes by their likelihood of being au
 | **How** | Protein language-model embeddings (ProtT5); DNA (DNABERT-2) and protein-interaction graph embeddings from the thesis; classical classifiers with nested cross-validation |
 | **Result** | ROC-AUC **0.91** on held-out high-confidence genes. **55%** of the genes SFARI added two years later were already in the model's top 10% |
 | **Why it matters** | Narrows thousands of genes to a short list of candidates for follow-up studies, the same ranking problem as target prioritisation |
+| **Explore it** | [Web app](https://joao-ps-inacio.github.io/Asd_gene_predict/): look up any gene, see where it ranks, what it does, and whether SFARI added it later |
 | **Run it** | [`notebooks/demo.ipynb`](notebooks/demo.ipynb) on a laptop, no GPU, or `pip install -e .` then `asd --help` |
+
+## Web app
+
+[**joao-ps-inacio.github.io/Asd_gene_predict**](https://joao-ps-inacio.github.io/Asd_gene_predict/) shows the thesis rankings for all 18,939 genes. Each gene page has its rank in both models, against where known SFARI genes fall, its UniProt function and disease involvement, and its gnomAD loss-of-function constraint. The default view lists the genes that had no label in January 2024, with the ones SFARI has added since marked in orange.
+
+<a href="https://joao-ps-inacio.github.io/Asd_gene_predict/#CHD4"><img src="reports/figures/app.png" alt="The web app: a ranked list of candidate genes on the left, with CHD4 first; on the right, CHD4's page, showing it was added to SFARI in 2026, ranked first of 16,274 unlabelled genes by the protein model, and its UniProt function." width="100%"></a>
+
+A static site with no build step (`app/`), published by GitHub Pages. Its data is built by `asd app-data` ([details](data/README.md#dados-da-app)).
 
 ## Results
 
@@ -72,15 +81,16 @@ flowchart LR
 | | |
 |---|---|
 | **Reproducible ML pipeline** | Same inputs, same outputs: pinned data versions, fixed seeds, results written to Parquet |
-| **CLI** | One entry point (`asd fetch`, `labels`, `embed`, `train`, `validate-temporal`) replacing three duplicated scripts and ad-hoc notebooks |
+| **CLI** | One entry point (`asd fetch`, `labels`, `embed`, `train`, `validate-temporal`, `app-data`) replacing three duplicated scripts and ad-hoc notebooks |
 | **Configuration-driven experiments** | Label sets, CV settings and models defined in [`configs/default.yaml`](configs/default.yaml), not in code |
 | **Data versioning and checksums** | Every input declared in [`configs/sources.yaml`](configs/sources.yaml); SHA-256 locked in [`sources.lock.yaml`](configs/sources.lock.yaml), so a changed upstream file fails loudly |
 | **Nested cross-validation** | Hyperparameter search inside each training fold, scaling inside the pipeline: no leakage into test folds |
 | **Model registry** | Classifiers and their search grids in one place ([`models/registry.py`](src/asd_gene_predict/models/registry.py)) |
 | **Fair model comparison** | Sources compared on identical genes and folds, with a paired corrected resampled t-test (Nadeau & Bengio) for repeated cross-validation |
 | **Temporal validation** | Prospective check against a newer SFARI release, with bootstrap confidence intervals and a gene-length baseline |
-| **Unit tests on offline fixtures** | 49 tests on small synthetic and sampled data; no network needed |
-| **CI** | Lint (ruff) and tests on every pull request with GitHub Actions |
+| **Unit tests on offline fixtures** | 59 tests on small synthetic and sampled data; no network needed |
+| **CI/CD** | Lint (ruff) and tests on every pull request; the web app deploys to GitHub Pages on every change to `main` |
+| **Web app** | Static site, no framework or build step; gene annotations split into 100 files loaded on demand, so a gene page downloads about 30 KB |
 | **Documented fixes** | Issues found in the original code, and how each was fixed: [`docs/changes_from_thesis.md`](docs/changes_from_thesis.md) |
 
 ## Quickstart
@@ -109,13 +119,16 @@ Temporal validation also needs the current SFARI "Human Gene" CSV, downloaded by
 | Krishnan et al., *Nat Neurosci* 2016 | negative genes | — |
 | [STRING](https://string-db.org/) | protein-interaction graph | v12.0 in the new pipeline |
 | HGNC, MANE | gene identifier map | current / v1.4 |
+| [UniProtKB/Swiss-Prot](https://www.uniprot.org/) | gene function, disease involvement (web app) | 2026_03 |
+| [gnomAD](https://gnomad.broadinstitute.org/) | loss-of-function constraint, LOEUF (web app) | v4.1 |
 | ProtT5 embeddings | protein features | computed in the thesis |
 
 ## Repository layout
 
 ```
+app/          web app (static site) and its data
 configs/      pipeline parameters, data sources and checksums
-docs/         changes from the thesis code, project plan
+docs/         changes from the thesis code
 notebooks/    end-to-end demo
 reports/      result reports and figures
 scripts/      report and figure generation
@@ -124,6 +137,7 @@ src/asd_gene_predict/
   embeddings/   embedding storage and import
   models/       model registry, cross-validation and metrics
   validation/   temporal validation and baselines
+  webapp.py     data for the web app
 tests/
 ```
 
@@ -133,7 +147,7 @@ The project is complete as a portfolio piece. Natural extensions:
 
 - gene-constraint (gnomAD LOEUF) and network-degree baselines, to test how much of the graph signal reflects how well studied a gene is;
 - new DNA and graph embeddings computed with this pipeline;
-- a genome-wide ranking with a small web app to look up any gene.
+- a genome-wide ranking from this pipeline, with one classifier for both feature sources, to replace the thesis rankings the web app shows today.
 
 ## Related repositories
 

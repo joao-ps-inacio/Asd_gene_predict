@@ -22,3 +22,5 @@ jobs:
           ruff format --check .
       - name: Testes
         run: pytest -q
+      - name: App (sintaxe do JavaScript)
+        run: node --check app/app.js

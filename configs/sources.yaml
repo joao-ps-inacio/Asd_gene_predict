@@ -111,6 +111,17 @@ sources:
     version: thesis-2025
     stage: validation
 
+  # --- App web -----------------------------------------------------------------------------
+  # Função, doenças e keywords das proteínas humanas revistas (Swiss-Prot), para a página de
+  # cada gene. O UniProt publica uma release nova a cada ~8 semanas: o lock fixa a usada. Se o
+  # `asd fetch` acusar diferença, `asd fetch uniprot_human --update-lock` aceita a versão nova.
+  uniprot_human:
+    description: UniProtKB/Swiss-Prot humano (função, doenças, keywords, ligação ao HGNC)
+    url: https://rest.uniprot.org/uniprotkb/stream?query=%28organism_id%3A9606%29%20AND%20%28reviewed%3Atrue%29&fields=accession%2Cgene_primary%2Cgene_synonym%2Cprotein_name%2Ccc_function%2Ccc_disease%2Ckeyword%2Clength%2Cxref_hgnc&format=tsv&compressed=true
+    filename: uniprot_human_reviewed_2026_03.tsv.gz
+    version: "2026_03"
+    stage: app
+
   gnomad_constraint:
     description: gnomAD v4.1 constraint metrics (LOEUF), baseline de restrição genética
     url: https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv

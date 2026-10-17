@@ -1,4 +1,9 @@
 # Gerado pelo `asd fetch`. Não editar à mão; usar `asd fetch --update-lock`.
+hgnc:
+  filename: hgnc_complete_set.txt
+  locked_at: '2026-10-17'
+  sha256: 12363916be36f8f6f91879b0faade4eeaac973722de7136ec61329b77f2c2f91
+  version: current
 krishnan_2016:
   filename: Krishnan_genes.csv
   locked_at: '2026-09-30'
@@ -34,3 +39,8 @@ sfari:
   locked_at: '2026-09-30'
   sha256: 4b48983fea02a3aa620af9de7b3d8ae0a081b45caab2560eb1dffba17e04c75f
   version: '2024-01-16'
+uniprot_human:
+  filename: uniprot_human_reviewed_2026_03.tsv.gz
+  locked_at: '2026-10-17'
+  sha256: bef75004f085be2a3ffe4f614ee131fc471d404e79e972a7ccf1c140369823dc
+  version: '2026_03'

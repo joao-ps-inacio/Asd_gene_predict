@@ -359,5 +359,100 @@ def validate_temporal(
     typer.echo(f"Guardado em {out_dir / 'temporal_validation.csv'}")
 
 
+@app.command("app-data")
+def app_data() -> None:
+    """Gerar os dados da app web (app/data): rankings da tese, labels e anotações dos genes."""
+    from datetime import date
+
+    from asd_gene_predict import webapp as wa
+    from asd_gene_predict.data import labels as lb
+    from asd_gene_predict.data.sources import load_lock, load_sources
+    from asd_gene_predict.validation import temporal as tv
+
+    src, lock = load_sources(), load_lock()
+    required = ["legacy_rank_protein", "legacy_rank_graph", "sfari", "krishnan_2016"]
+    optional = ["sfari_2026q2", "legacy_peptides", "hgnc", "uniprot_human", "gnomad_constraint"]
+    missing = [n for n in required if not src[n].path().exists()]
+    if missing:
+        cmd = "asd fetch " + " ".join(missing)
+        typer.echo(f"Faltam ficheiros: {missing}. Correr `{cmd}`.", err=True)
+        raise typer.Exit(1)
+    absent = [n for n in optional if not src[n].path().exists()]
+    if absent:
+        typer.echo(f"Sem {absent}: a app fica sem essa informação.", err=True)
+    has = {n: src[n].path().exists() for n in optional}
+
+    protein = wa.read_ranking(src["legacy_rank_protein"].path())
+    graph = wa.read_ranking(src["legacy_rank_graph"].path())
+    old = lb.read_sfari(src["sfari"].path())
+    negatives = set(lb.read_krishnan(src["krishnan_2016"].path()))
+    new = lb.read_sfari(src["sfari_2026q2"].path()) if has["sfari_2026q2"] else None
+    added = set(tv.new_genes(old, new)[wa.ID]) if new is not None else set()
+
+    rankings = [protein["score"], graph["score"]]
+    if has["legacy_peptides"]:
+        rankings.append(tv.protein_length(src["legacy_peptides"].path()))
+    exclude = set(old[wa.ID]) | negatives
+    pool = wa.candidate_pool(rankings, exclude)
+
+    hgnc = wa.read_hgnc(src["hgnc"].path()) if has["hgnc"] else None
+    uniprot = wa.read_uniprot(src["uniprot_human"].path()) if has["uniprot_human"] else None
+    loeuf = wa.read_loeuf(src["gnomad_constraint"].path()) if has["gnomad_constraint"] else None
+
+    genes = wa.build_genes(
+        protein,
+        graph,
+        roles=wa.gene_roles(protein.index.union(graph.index), old, negatives, added),
+        pool=pool,
+        s24=wa.sfari_label(old),
+        s26=wa.sfari_label(new) if new is not None else None,
+        hgnc=hgnc,
+        uniprot=uniprot,
+        loeuf=loeuf,
+    )
+    annotations = (
+        wa.build_annotations(genes, hgnc, uniprot)
+        if hgnc is not None and uniprot is not None
+        else {}
+    )
+    ranks = genes.set_index("id")
+    meta = {
+        "generated": date.today().isoformat(),
+        "n_genes": len(genes),
+        "n_protein": int(ranks["pr"].notna().sum()),
+        "n_graph": int(ranks["gr"].notna().sum()),
+        "roles": {k or "none": int(v) for k, v in ranks["role"].value_counts().items()},
+        "added_total": len(added),
+        "validation": {
+            "protein": wa.pool_summary(ranks["pr"].dropna(), pool, added),
+            "graph": wa.pool_summary(ranks["gr"].dropna(), pool, added),
+        },
+        "sources": {
+            n: {
+                "label": wa.SOURCE_INFO[n][0],
+                "url": wa.SOURCE_INFO[n][1],
+                "version": (
+                    src[n].version
+                    if src[n].version != "current"
+                    else lock.get(n, {}).get("locked_at", "")
+                ),
+            }
+            for n in required + optional
+            if src[n].path().exists()
+        },
+    }
+    written = wa.write_app_data(genes, annotations, meta)
+    size = sum(p.stat().st_size for p in written) / 1e6
+    typer.echo(
+        f"{len(genes)} genes, {len(annotations)} com anotação; "
+        f"{len(written)} ficheiros ({size:.1f} MB) em {wa.APP_DATA}"
+    )
+    for name, v in meta["validation"].items():
+        typer.echo(
+            f"{name}: {v['n_new']} genes novos em {v['n_pool']} candidatos; "
+            f"top 1% {v['top1']:.0%}, top 10% {v['top10']:.0%}"
+        )
+
+
 if __name__ == "__main__":
     app()

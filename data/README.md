@@ -30,3 +30,16 @@ Ligações:
 - **STRING** (PPI humano): https://string-db.org/cgi/download
 - **HGNC** (símbolos e IDs): https://www.genenames.org/download/
 - **MANE** (transcrito canónico): https://www.ncbi.nlm.nih.gov/refseq/MANE/
+- **UniProt** (função, doenças e keywords, para a app): https://www.uniprot.org/
+- **gnomAD** (LOEUF, para a validação e a app): https://gnomad.broadinstitute.org/downloads
+
+## Dados da app
+
+`asd app-data` junta os rankings da tese, os labels (SFARI 2024 e 2026, Krishnan) e as anotações (HGNC, UniProt, gnomAD) e escreve `app/data/`. Ao contrário do resto, estes ficheiros **vão para o Git**: são derivados, pequenos por gene, e o GitHub Pages serve-os tal como estão.
+
+```bash
+asd fetch --stage labels && asd fetch --stage validation && asd fetch hgnc uniprot_human
+asd app-data
+```
+
+O SFARI de 2026 é uma fonte manual (ver `configs/sources.yaml`). Sem ele, a app não marca os genes acrescentados depois do treino.
