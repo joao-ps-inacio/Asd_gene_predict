@@ -7,31 +7,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Download
+      - name: UniProt
+        continue-on-error: true
         run: |
-          set -euo pipefail
           mkdir -p raw
-          curl -fsSL --retry 3 "https://rest.uniprot.org/uniprotkb/stream?query=%28organism_id%3A9606%29%20AND%20%28reviewed%3Atrue%29&fields=accession%2Cgene_primary%2Cgene_synonym%2Cprotein_name%2Ccc_function%2Ccc_disease%2Ckeyword%2Clength%2Cxref_hgnc&format=tsv&compressed=true" -o raw/uniprot_human_reviewed.tsv.gz
-          curl -fsSL --retry 3 -I "https://rest.uniprot.org/uniprotkb/stream?query=reviewed:true%20AND%20organism_id:9606&format=tsv&fields=accession&size=1" | grep -i -E "x-uniprot-release|x-release" > raw/uniprot_release.txt || true
-          curl -fsSL --retry 3 https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt | gzip -9 > raw/hgnc_complete_set.txt.gz
-          curl -fsSL --retry 3 https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv -o /tmp/gnomad.tsv
-          pip install -q pandas
-          python - <<'PY'
-          import pandas as pd
-          df = pd.read_csv("/tmp/gnomad.tsv", sep="\t", low_memory=False)
-          print(df.shape, list(df.columns)[:30])
-          keep = df[df["mane_select"].astype(str).str.lower().eq("true") | df["canonical"].astype(str).str.lower().eq("true")]
-          keep.to_csv("raw/gnomad.v4.1.constraint_metrics.canonical.tsv.gz", sep="\t", index=False, compression="gzip")
-          print(keep.shape)
-          PY
-          ls -la raw; cat raw/uniprot_release.txt || true
-          zcat raw/uniprot_human_reviewed.tsv.gz | head -3
-          zcat raw/uniprot_human_reviewed.tsv.gz | wc -l
+          U="https://rest.uniprot.org/uniprotkb/stream?query=%28organism_id%3A9606%29%20AND%20%28reviewed%3Atrue%29&fields=accession%2Cgene_primary%2Cgene_synonym%2Cprotein_name%2Ccc_function%2Ccc_disease%2Ckeyword%2Clength%2Cxref_hgnc&format=tsv&compressed=true"
+          code=$(curl -sSL --retry 3 -o raw/uniprot_human_reviewed.tsv.gz -w "%{http_code}" "$U" -D raw/uniprot_headers.txt)
+          echo "::notice::uniprot http=$code size=$(stat -c %s raw/uniprot_human_reviewed.tsv.gz) rows=$(zcat raw/uniprot_human_reviewed.tsv.gz | wc -l) release=$(grep -i release raw/uniprot_headers.txt | tr -d '\r' | tr '\n' ' ')"
+          zcat raw/uniprot_human_reviewed.tsv.gz | head -2 | cut -c1-300 | while read -r l; do echo "::notice::$l"; done
+      - name: HGNC
+        continue-on-error: true
+        run: |
+          mkdir -p raw
+          code=$(curl -sSL --retry 3 -o raw/hgnc.txt -w "%{http_code}" https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt)
+          echo "::notice::hgnc http=$code rows=$(wc -l < raw/hgnc.txt)"
+          gzip -9 raw/hgnc.txt && mv raw/hgnc.txt.gz raw/hgnc_complete_set.txt.gz
+      - name: gnomAD
+        continue-on-error: true
+        run: |
+          mkdir -p raw
+          code=$(curl -sSL --retry 3 -o /tmp/gnomad.tsv -w "%{http_code}" https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv)
+          echo "::notice::gnomad http=$code rows=$(wc -l < /tmp/gnomad.tsv) cols=$(head -1 /tmp/gnomad.tsv | tr '\t' ',' | cut -c1-600)"
+          head -1 /tmp/gnomad.tsv > raw/gnomad_head.tsv
+          awk -F'\t' 'NR==1{for(i=1;i<=NF;i++){if($i=="mane_select")m=i; if($i=="canonical")c=i}; print; next} ($m=="true"||$c=="true")' /tmp/gnomad.tsv | gzip -9 > raw/gnomad.v4.1.constraint_metrics.canonical.tsv.gz
+          echo "::notice::gnomad kept rows=$(zcat raw/gnomad.v4.1.constraint_metrics.canonical.tsv.gz | wc -l)"
       - name: Commit
         run: |
+          ls -la raw
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add raw
