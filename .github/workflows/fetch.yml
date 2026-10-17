@@ -1,0 +1,39 @@
+name: fetch-annotations (temporary)
+on: push
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download
+        run: |
+          set -euo pipefail
+          mkdir -p raw
+          curl -fsSL --retry 3 "https://rest.uniprot.org/uniprotkb/stream?query=%28organism_id%3A9606%29%20AND%20%28reviewed%3Atrue%29&fields=accession%2Cgene_primary%2Cgene_synonym%2Cprotein_name%2Ccc_function%2Ccc_disease%2Ckeyword%2Clength%2Cxref_hgnc&format=tsv&compressed=true" -o raw/uniprot_human_reviewed.tsv.gz
+          curl -fsSL --retry 3 -I "https://rest.uniprot.org/uniprotkb/stream?query=reviewed:true%20AND%20organism_id:9606&format=tsv&fields=accession&size=1" | grep -i -E "x-uniprot-release|x-release" > raw/uniprot_release.txt || true
+          curl -fsSL --retry 3 https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt | gzip -9 > raw/hgnc_complete_set.txt.gz
+          curl -fsSL --retry 3 https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv -o /tmp/gnomad.tsv
+          pip install -q pandas
+          python - <<'PY'
+          import pandas as pd
+          df = pd.read_csv("/tmp/gnomad.tsv", sep="\t", low_memory=False)
+          print(df.shape, list(df.columns)[:30])
+          keep = df[df["mane_select"].astype(str).str.lower().eq("true") | df["canonical"].astype(str).str.lower().eq("true")]
+          keep.to_csv("raw/gnomad.v4.1.constraint_metrics.canonical.tsv.gz", sep="\t", index=False, compression="gzip")
+          print(keep.shape)
+          PY
+          ls -la raw; cat raw/uniprot_release.txt || true
+          zcat raw/uniprot_human_reviewed.tsv.gz | head -3
+          zcat raw/uniprot_human_reviewed.tsv.gz | wc -l
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add raw
+          git commit -m "Downloaded annotation files"
+          git push
